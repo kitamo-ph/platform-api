@@ -1,0 +1,18 @@
+# Local handoff state
+.kitamo/
+
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Logs and editor/OS state
+*.log
+.DS_Store
+.idea/
+.vscode/
