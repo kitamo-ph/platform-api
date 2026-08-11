@@ -48,6 +48,20 @@ function sharedContractSpecifiers(text: string): string[] {
   ].map((match) => match[1] ?? "");
 }
 
+function fastifySpecifiers(text: string): string[] {
+  return [
+    ...text.matchAll(
+      /(?:\bfrom\s+|\bimport\s+(?!\()|\b(?:import|require(?:\.resolve)?)\s*\(\s*)["'`](fastify|@fastify\/[^"'`]+)["'`]/gu,
+    ),
+  ].map((match) => match[1] ?? "");
+}
+
+const listenerCall = /\blisten\s*\(|\[\s*["'`]listen["'`]\s*\]\s*\(/u;
+const routeRegistration =
+  /\.\s*(?:all|delete|get|head|options|patch|post|put|register|route|use)\s*\(/iu;
+const bracketRouteRegistration =
+  /\[\s*["'`](?:all|delete|get|head|options|patch|post|put|register|route|use)["'`]\s*\]\s*\(/iu;
+
 describe("Shared Contracts architecture boundary", () => {
   it("allows direct package imports only in the single contract boundary", () => {
     const packageImports = sources.flatMap(({ path, text }) =>
@@ -97,25 +111,87 @@ describe("Shared Contracts architecture boundary", () => {
   });
 });
 
-describe("API-1 remains transport, identity, persistence, and cloud neutral", () => {
-  it("contains no server, route, HTTP listener, auth, database, queue, or cloud implementation", () => {
-    const prohibitedCode = [
-      /\blisten\s*\(/iu,
-      /\b(?:app|router|server)\.(?:delete|get|patch|post|put|route|use)\s*\(/iu,
-      /["'`]\/api\//u,
-      /\b(?:Fastify|Express|Hono|Supabase|Clerk|Prisma|Drizzle|Kysely|Sequelize|PostgreSQL|Redis|OAuth|JWT)\b/iu,
-      /\b(?:webhook|queue|migration|route|handler|controller)s?\b/iu,
-    ];
-
+describe("API-2 transport and runtime architecture", () => {
+  it("confines Fastify to transport, composition, and runtime layers", () => {
+    const allowedLayers = /^src\/(?:transport|composition|runtime)\//u;
     for (const source of sources) {
-      for (const expression of prohibitedCode) {
-        expect(source.text, `${source.path}: ${String(expression)}`).not.toMatch(expression);
+      const fastifyReferences = fastifySpecifiers(source.text);
+      if (fastifyReferences.length > 0) {
+        expect(source.path, source.path).toMatch(allowedLayers);
+        expect(
+          fastifyReferences.every((specifier) => specifier === "fastify"),
+          source.path,
+        ).toBe(true);
       }
-      expect(source.path).not.toMatch(/\/(?:routes?|handlers?|controllers?|http|server)\//iu);
+      if (/^src\/(?:application|policies|ports|contracts|config)\//u.test(source.path)) {
+        expect(source.text, source.path).not.toMatch(/\bFastify\b|["'`]@?fastify/u);
+        expect(source.text, source.path).not.toMatch(
+          /["'`](?:\.\.\/)+(?:transport|composition|runtime|index)(?:\/|["'`])/u,
+        );
+      }
     }
   });
 
-  it("does not install a framework, auth provider, database, or cloud client", () => {
+  it.each([
+    'import "fastify";',
+    'await import("fastify");',
+    'const framework = require("fastify");',
+    'require.resolve("@fastify/cors");',
+  ])("recognizes ESM and CommonJS Fastify references", (source) => {
+    expect(fastifySpecifiers(source)).toHaveLength(1);
+  });
+
+  it("permits the network listener only in the explicit runtime entrypoint", () => {
+    const listenerSources = sources.filter(({ text }) => listenerCall.test(text));
+    expect(listenerSources.map(({ path }) => path)).toEqual(["src/runtime/start.ts"]);
+    expect(listenerSources[0]?.text).toMatch(/isDirectRuntimeInvocation\(import\.meta\.url\)/u);
+    for (const source of sources.filter(({ path }) => path !== "src/runtime/start.ts")) {
+      expect(source.text, source.path).not.toMatch(/\b(?:runRuntimeMain|startRuntime)\s*\(/u);
+    }
+  });
+
+  it.each([
+    "server.listen({ port: 3000 });",
+    'server["listen"]({ port: 3000 });',
+    "const { listen } = server; listen({ port: 3000 });",
+  ])("recognizes direct, bracketed, and destructured listener calls", (source) => {
+    expect(source).toMatch(listenerCall);
+  });
+
+  it("contains no production operation, merchant route, or test-only route registration", () => {
+    const prohibitedRouteLiteral = /["'`]\/(?:__test__|api|health|ready|metrics)(?:\/|["'`])/iu;
+
+    for (const source of sources) {
+      if (/^src\/(?:transport|composition|runtime)\//u.test(source.path)) {
+        const routeCandidateText = source.text.replace(/\bReflect\.get\s*\(/gu, "");
+        expect(routeCandidateText, source.path).not.toMatch(routeRegistration);
+        expect(routeCandidateText, source.path).not.toMatch(bracketRouteRegistration);
+      }
+      expect(source.text, source.path).not.toMatch(prohibitedRouteLiteral);
+      expect(source.path, source.path).not.toMatch(/\/(?:routes?|handlers?|controllers?)\//iu);
+    }
+  });
+
+  it.each([
+    'transport.post("/merchant", handler);',
+    'transport["route"]({ method: "GET", url: path });',
+    "instance.register(plugin);",
+  ])("recognizes route and plugin registration regardless of variable name", (source) => {
+    expect(routeRegistration.test(source) || bracketRouteRegistration.test(source)).toBe(true);
+  });
+
+  it("keeps identity, persistence, queue, and cloud integrations absent", () => {
+    const prohibitedCode =
+      /\b(?:Express|Hono|Supabase|Clerk|Prisma|Drizzle|Kysely|Sequelize|PostgreSQL|Redis|OAuth|JWT|webhook|migration|BullMQ|RabbitMQ|Kafka)\b/iu;
+    const prohibitedAuthorityHeader =
+      /["'`](?:user_id|role|business_id|stall_id|authorization)["'`]\s*:/iu;
+    for (const source of sources) {
+      expect(source.text, source.path).not.toMatch(prohibitedCode);
+      expect(source.text, source.path).not.toMatch(prohibitedAuthorityHeader);
+    }
+  });
+
+  it("pins only Fastify as the approved transport dependency", () => {
     const manifest = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")) as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
@@ -124,8 +200,26 @@ describe("API-1 remains transport, identity, persistence, and cloud neutral", ()
       ...Object.keys(manifest.dependencies ?? {}),
       ...Object.keys(manifest.devDependencies ?? {}),
     ];
+    expect(manifest.dependencies?.["fastify"]).toBe("5.11.3");
+    expect(dependencyNames.filter((name) => /^(?:fastify|@fastify\/)/u.test(name))).toEqual([
+      "fastify",
+    ]);
+
     const prohibitedDependency =
-      /^(?:fastify|express|hono|@supabase\/|@clerk\/|@prisma\/|prisma$|drizzle|kysely|sequelize|pg$|postgres$|redis$|ioredis$|jsonwebtoken$|jose$)/u;
+      /^(?:express|hono|@supabase\/|@clerk\/|@prisma\/|prisma$|drizzle|kysely|sequelize|typeorm$|mongoose$|mongodb$|mysql2$|pg$|postgres$|redis$|ioredis$|bullmq$|amqplib$|kafkajs$|jsonwebtoken$|jose$|swagger|openapi|@aws-sdk\/|firebase)/u;
     expect(dependencyNames.filter((name) => prohibitedDependency.test(name))).toEqual([]);
+  });
+
+  it("locks the fail-closed transport defaults in production source", () => {
+    const serverFactory = sources.find(({ path }) => path === "src/transport/server.ts")?.text;
+    const runtimeConfig = sources.find(({ path }) => path === "src/config/runtime-config.ts")?.text;
+    expect(serverFactory).toContain("bodyLimit: TRANSPORT_BODY_LIMIT_BYTES");
+    expect(serverFactory).toContain("trustProxy: false");
+    expect(serverFactory).toContain("requestIdHeader: false");
+    expect(serverFactory).toContain("return503OnClosing: false");
+    expect(serverFactory).toContain('decorate("beginTransportDrain"');
+    expect(serverFactory).toContain('removeContentTypeParser("text/plain")');
+    expect(runtimeConfig).toContain('candidate === "production"');
+    expect(runtimeConfig).toContain('value ?? "127.0.0.1"');
   });
 });

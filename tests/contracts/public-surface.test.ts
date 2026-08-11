@@ -20,6 +20,7 @@ import {
   SHARED_CONTRACTS_APPROVED_COMMIT,
   SHARED_CONTRACTS_APPROVED_PACKAGE,
   SHARED_CONTRACTS_APPROVED_VERSION,
+  assertSharedContractsRuntimeIdentity,
 } from "../../src/contracts/package-evidence.js";
 
 const EXPECTED_EXPORT_KEYS = [
@@ -176,6 +177,16 @@ describe("approved Shared Contracts package surface", () => {
     expect(root.SHARED_CONTRACTS_PACKAGE_NAME).toBe(SHARED_CONTRACTS_APPROVED_PACKAGE);
     expect(root.SHARED_CONTRACTS_VERSION).toBe(SHARED_CONTRACTS_APPROVED_VERSION);
     expect(root.PUBLIC_EXPORT_PATHS).toEqual(EXPECTED_EXPORT_KEYS);
+  });
+
+  it("fails closed when runtime package identity drifts", () => {
+    expect(() => assertSharedContractsRuntimeIdentity()).not.toThrow();
+    expect(() => assertSharedContractsRuntimeIdentity("@kitamo/wrong", "0.1.0")).toThrow(
+      "Shared Contracts runtime identity does not match the approved API pin.",
+    );
+    expect(() => assertSharedContractsRuntimeIdentity("@kitamo/shared-contracts", "0.1.1")).toThrow(
+      "Shared Contracts runtime identity does not match the approved API pin.",
+    );
   });
 
   it.each(PUBLIC_MODULES)("imports %s with its exact runtime exports", (_path, module, keys) => {
