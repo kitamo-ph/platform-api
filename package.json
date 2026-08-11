@@ -1,0 +1,39 @@
+{
+  "name": "@kitamo/platform-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.19.4"
+  },
+  "packageManager": "npm@10.8.2",
+  "scripts": {
+    "prepare:contracts": "node scripts/prepare-shared-contracts.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "check:contracts": "vitest run tests/contracts tests/compatibility",
+    "check:architecture": "vitest run tests/architecture",
+    "security:secrets": "node scripts/check-secrets.mjs",
+    "audit": "npm audit --audit-level=high",
+    "verify": "npm run prepare:contracts && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run check:contracts && npm run check:architecture && npm run build && npm run security:secrets && npm run audit"
+  },
+  "dependencies": {
+    "@kitamo/shared-contracts": "https://codeload.github.com/kitamo-ph/shared-contracts/tar.gz/a380f19f2adcf0557b424461f869aa3d0069e176"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@types/node": "20.19.43",
+    "@typescript-eslint/parser": "8.59.3",
+    "eslint": "9.39.4",
+    "globals": "14.0.0",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.59.3",
+    "vitest": "4.1.10"
+  }
+}

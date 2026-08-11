@@ -1,0 +1,49 @@
+{
+  "repository": "https://github.com/kitamo-ph/shared-contracts.git",
+  "sourceArchiveUrl": "https://codeload.github.com/kitamo-ph/shared-contracts/tar.gz/a380f19f2adcf0557b424461f869aa3d0069e176",
+  "commit": "a380f19f2adcf0557b424461f869aa3d0069e176",
+  "packageName": "@kitamo/shared-contracts",
+  "packageVersion": "0.1.0",
+  "lockIntegrity": "sha512-uLlwo+G8LI6PYl54Br3cunSP20AqXPEQfotq0tMLvDwuvcKw1+LEym1FRbIF0OZ8U8wHjNx6oCAt7neRCuIhMQ==",
+  "packageExportKeys": [
+    ".",
+    "./common",
+    "./identifiers",
+    "./businesses",
+    "./stalls",
+    "./time",
+    "./money",
+    "./units",
+    "./versions",
+    "./pagination",
+    "./errors",
+    "./sync",
+    "./audit",
+    "./support"
+  ],
+  "publicImportPaths": [
+    "@kitamo/shared-contracts",
+    "@kitamo/shared-contracts/common",
+    "@kitamo/shared-contracts/identifiers",
+    "@kitamo/shared-contracts/businesses",
+    "@kitamo/shared-contracts/stalls",
+    "@kitamo/shared-contracts/time",
+    "@kitamo/shared-contracts/money",
+    "@kitamo/shared-contracts/units",
+    "@kitamo/shared-contracts/versions",
+    "@kitamo/shared-contracts/pagination",
+    "@kitamo/shared-contracts/errors",
+    "@kitamo/shared-contracts/sync",
+    "@kitamo/shared-contracts/audit",
+    "@kitamo/shared-contracts/support"
+  ],
+  "prohibitedSubpaths": [
+    "src",
+    "compatibility",
+    "conformance",
+    "scripts",
+    "tests",
+    "docs",
+    "generated"
+  ]
+}
