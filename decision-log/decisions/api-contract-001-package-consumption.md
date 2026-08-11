@@ -1,0 +1,24 @@
+# API-CONTRACT-001 — Shared Contracts package consumption
+
+- **ID:** API-CONTRACT-001
+- **Title:** Shared Contracts package consumption
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner; Shared Contracts authority for the accepted source/package evidence
+- **Approval evidence:** API-1 execution authorization dated 2026-08-11 and the accepted SC-4 handoff for `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`
+- **Context:** Shared Contracts is intentionally not published to npm. Platform API needs normal Node resolution, an immutable source, reproducible CI acquisition, and no dependency on an arbitrary sibling checkout.
+- **Decision:** Pin the exact GitHub source archive for commit `a380f19f2adcf0557b424461f869aa3d0069e176` in `package.json`, `package-lock.json`, and `config/shared-contracts-pin.json`. Verify the lockfile SHA-512, package name `@kitamo/shared-contracts`, version `0.1.0`, export keys, and runtime metadata. Build only the installed package copy with Platform API's pinned TypeScript compiler before use.
+- **Rationale:** This is immutable, CI-safe, independent of sibling state, uses normal package resolution, requires no producer mutation, and allows both byte-integrity and semantic identity checks.
+- **Alternatives:** An unpinned branch or `latest` was rejected as mutable. A sibling/`file:` dependency was rejected as developer-state-dependent. A direct Git dependency was rejected because the current producer lifecycle did not yield a usable built export surface during the tested installation flow. A locally regenerated `npm pack` artifact was rejected as the authority pin because its bytes differed across tested platforms.
+- **Consequences:** Clean installation needs network access to the exact archive and a local preparation step. Generated dependency output remains ignored under `node_modules`.
+- **Security impact:** Wrong archive, integrity, package identity, version, export map, or runtime metadata fails closed. No credentials are required.
+- **Privacy impact:** No production or personal data is acquired; the dependency contains contract source and governance artifacts only.
+- **Persistence impact:** None. Installed/build artifacts are dependencies, not application persistence.
+- **Compatibility impact:** The consumer is pinned to one accepted commit and package version; upgrades require a reviewed pin and conformance update.
+- **Affected repositories:** `platform-api` consumes `shared-contracts`; no producer, Android, or Admin mutation is authorized.
+- **Implementation gate:** `npm ci` followed by `npm run prepare:contracts` must succeed without a sibling checkout.
+- **Verification:** Pin-policy negative tests, lockfile checks, clean-environment install/verify, public import checks, and unchanged sibling worktrees.
+- **Reconsideration conditions:** An approved npm release, a producer-supported deterministic install artifact, a new accepted Shared Contracts version/commit, or evidence that the source archive is no longer stable or available.
+- **Supersedes:** None
+- **Superseded by:** None

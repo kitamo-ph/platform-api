@@ -1,0 +1,24 @@
+# API-AUTH-003 — Structural validation is not identity or authorization
+
+- **ID:** API-AUTH-003
+- **Title:** Structural validation is not identity or authorization
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner; security owner for any later production identity design
+- **Approval evidence:** API-1 execution authorization and explicit contract-context restriction dated 2026-08-11
+- **Context:** Shared Contracts validates opaque user, business, stall, and device identifiers. Those values do not prove credential validity, canonical identity mapping, membership, role, ownership, or authorization.
+- **Decision:** API-1's optional contract context contains only validated `contract_version` and `correlation_id`. No identifier is accepted as an authenticated principal or authorization fact solely because it passes a schema.
+- **Rationale:** Validation and trust resolution are distinct security boundaries.
+- **Alternatives:** Treating client claims, Clerk subjects, device IDs, business IDs, or stall IDs as trusted authority was rejected.
+- **Consequences:** `API-AUTH-001`, `API-AUTH-002`, and `API-AUTHZ-001` remain unresolved and block authenticated/privileged operations.
+- **Security impact:** Defaults to denial and avoids confused-deputy and cross-tenant access assumptions.
+- **Privacy impact:** Minimizes API-1 context and avoids unnecessary identity data.
+- **Persistence impact:** No identity or membership store is introduced.
+- **Compatibility impact:** Future identity providers may be added behind explicit resolution boundaries without changing opaque shared IDs.
+- **Affected repositories:** `platform-api`; future identity consumers only after separate approval.
+- **Implementation gate:** No principal, membership, or authorization model may be inferred from structural schemas.
+- **Verification:** Contract-context exact-key tests and architecture/source review for identity-provider or authorization implementations.
+- **Reconsideration conditions:** Approved identity, membership, and authorization decisions with authoritative mappings.
+- **Supersedes:** None
+- **Superseded by:** None

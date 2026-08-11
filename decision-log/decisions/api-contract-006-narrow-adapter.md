@@ -1,0 +1,24 @@
+# API-CONTRACT-006 — Narrow consumer adapter without schema copies
+
+- **ID:** API-CONTRACT-006
+- **Title:** Narrow consumer adapter without schema copies
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** API-1 execution authorization dated 2026-08-11
+- **Context:** Platform API needs a stable internal boundary for package evidence, re-exports, supported-version enforcement, and minimal context parsing without becoming a second canonical source.
+- **Decision:** `src/contracts/` is the single Platform API-owned Shared Contracts boundary. It may re-export public symbols, expose approved package/commit evidence, invoke runtime schemas, and provide narrow parsing helpers. It may not copy, broaden, weaken, reinterpret, or replace a shared schema.
+- **Rationale:** Centralization makes dependency direction, upgrades, and architecture checks reviewable while preserving Shared Contracts authority.
+- **Alternatives:** Direct imports throughout the application and locally rewritten Zod schemas were rejected.
+- **Consequences:** Future application code depends on the adapter. Missing merchant or compatibility contracts remain missing instead of being filled locally.
+- **Security impact:** Strict shared validation is preserved and local permissive variants are prohibited.
+- **Privacy impact:** Strict schemas prevent accidental extra fields; the adapter cannot introduce new personal-data fields.
+- **Persistence impact:** The adapter creates no row types, database schema, or persistence translation.
+- **Compatibility impact:** Platform-specific helpers can evolve internally only while preserving accepted shared semantics.
+- **Affected repositories:** `platform-api`; `shared-contracts` remains canonical and unchanged.
+- **Implementation gate:** No canonical Platform API source may define copied Zod schemas for shared areas.
+- **Verification:** Source scans, import-boundary tests, schema strictness tests, and declaration compilation.
+- **Reconsideration conditions:** A later approved architecture decision that preserves an equally narrow canonical boundary.
+- **Supersedes:** None
+- **Superseded by:** None

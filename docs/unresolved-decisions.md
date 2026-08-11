@@ -1,12 +1,20 @@
-# Unresolved Platform API decisions
+# Platform API decision register
 
-Inspection date: 2026-07-25
-Register scope: API-0 evidence and gates for future Platform API work
+Current review date: 2026-08-11
+Historical inspection date: 2026-07-25
+Register scope: API-1 decisions and remaining gates for future Platform API work
 
-No decision in this register is approved. The local Platform API directory is
-not a Git repository, and Shared Contracts has no package, public exports,
-version, schemas, or release. The inherited stack direction is evidence for a
-proposal only.
+API-0 began from a non-Git Platform API directory and an empty Shared Contracts
+repository. Those dated findings remain historical. Platform API is now a Git
+repository, and Shared Contracts SC-0 through SC-4 provide the accepted
+`@kitamo/shared-contracts@0.1.0` public surface at commit
+`a380f19f2adcf0557b424461f869aa3d0069e176`.
+
+API-1 approves only the bounded internal decisions recorded under
+`decision-log/decisions/`. The framework/server, merchant operations, identity,
+authorization, persistence, production sync, audit persistence, privacy,
+reliability, and deployment decisions below remain Proposed, Unresolved, or
+Blocked as stated.
 
 ## API-ARCH-001 — Server framework
 
@@ -18,7 +26,8 @@ proposal only.
 - **Current evidence:** The brief permits a minimal framework such as Fastify;
   no Platform API implementation or approved framework decision exists.
 - **Missing evidence:** Deployment constraints, security review, performance
-  requirements, and an approved Shared Contracts consumption boundary.
+  requirements. The Shared Contracts consumer boundary is now verified
+  independently of the framework.
 - **Affected repositories:** `platform-api`; indirectly all future API
   consumers.
 - **Contract impact:** The framework must accept Shared Contracts schemas
@@ -48,12 +57,14 @@ proposal only.
 ## API-ARCH-002 — Runtime and deployment target
 
 - **Status:** Unresolved
-- **Decision needed:** Approve the production Node version policy, module
-  format, process model, hosting target, and runtime limits.
+- **Decision needed:** Approve the production Node support policy, process
+  model, hosting target, and runtime limits. API-1 already fixes ESM, Node
+  `>=20.19.4`, and CI Node `20.20.0` for the tooling foundation.
 - **Why it matters:** These constraints determine framework compatibility,
   cold starts, shutdown, observability, and connection management.
-- **Current evidence:** Local Node is `20.20.2`; inherited direction proposes
-  Node `>=20.19.4` and Node `20.20.0` in CI. No deployment files exist.
+- **Current evidence:** API-1 enforces Node `>=20.19.4`, uses Node `20.20.0` in
+  CI, and builds strict TypeScript as ESM. No server process model, host, or
+  deployment file exists.
 - **Missing evidence:** Approved host, support window, regional/data-residency
   needs, scaling model, and operational ownership.
 - **Affected repositories:** `platform-api`; CI and operations.
@@ -72,8 +83,8 @@ proposal only.
 - **Offline impact:** No change to local offline behavior.
 - **Options:** Long-lived Node service; approved serverless Node target;
   containerized Node service.
-- **Safest current recommendation:** Use the inherited Node baseline for local
-  planning only; defer production hosting and process decisions.
+- **Safest current recommendation:** Retain the verified API-1 tooling baseline
+  and defer production hosting, server lifecycle, and process decisions.
 - **Required approvers:** Platform API architect, operations owner, security
   owner, and privacy owner where residency is affected.
 - **Blocking milestones:** Production deployment, persistence, or external
@@ -81,71 +92,39 @@ proposal only.
 
 ## API-CONTRACT-001 — Shared Contracts package-consumption method
 
-- **Status:** Blocked
-- **Decision needed:** Select an identifiable published, workspace, `file:`,
-  Git-commit, or TypeScript-project-reference dependency.
-- **Why it matters:** Platform API may consume only verified public exports and
-  must record an exact version or commit.
-- **Current evidence:** Local Shared Contracts is non-Git and contains only a
-  preflight document; its public remote is empty; there is no package manifest,
-  source, commit, version, export map, build output, or release.
-- **Missing evidence:** A package identity, public export surface, immutable
-  version or commit, distribution method, and consumer instructions.
-- **Affected repositories:** `shared-contracts`, `platform-api`, and every
-  future consumer.
-- **Contract impact:** All canonical contract consumption is blocked.
-- **Android impact:** No approved source-to-canonical compatibility artifacts
-  are available.
-- **Admin impact:** No package can be shared with Admin.
-- **Customer impact:** No package can be shared with Customer Mobile.
-- **Website impact:** No public API contracts are available.
-- **Security impact:** Local substitutes could bypass canonical validation.
-- **Privacy impact:** Missing schemas prevent reviewed data minimization.
-- **Persistence impact:** No canonical persisted boundary may be inferred.
-- **Sync impact:** Sync envelopes and results are missing.
-- **Offline impact:** Android remains authoritative for existing offline
-  operations.
-- **Options:** The five methods permitted by the bootstrap brief, after Shared
-  Contracts implements one safely.
-- **Safest current recommendation:** Consume nothing and request an approved
-  Shared Contracts package/export milestone.
-- **Required approvers:** Shared Contracts owner and Platform API architect;
-  affected consumer owners for breaking distribution choices.
-- **Blocking milestones:** API-1 validation shell and every production
-  operation.
+- **Status:** Approved for API-1
+- **Decision:** Consume the exact GitHub source archive for
+  `@kitamo/shared-contracts@0.1.0` at
+  `a380f19f2adcf0557b424461f869aa3d0069e176`, validate its lock integrity and
+  metadata, and build the installed copy with the consumer's pinned compiler.
+- **Durable record:**
+  `decision-log/decisions/api-contract-001-package-consumption.md`.
+- **Why it changed:** SC-4 supplied an accepted package, version, public export
+  map, runtime schemas, tests, and immutable commit.
+- **Rejected alternatives:** Unpinned branch/latest; arbitrary sibling/file
+  dependency; direct Git dependency without a usable built install surface;
+  and a locally regenerated pack whose bytes differed across tested platforms.
+- **Remaining limits:** Approval covers the API-1 package foundation only. It
+  does not approve a producer change, package publication, merchant contracts,
+  production operations, or cross-repository compatibility mappings.
 
 ## API-CONTRACT-002 — Contract-version negotiation
 
-- **Status:** Blocked
-- **Decision needed:** Define version syntax, supported range representation,
-  negotiation location, compatibility rules, and fail-closed behavior.
-- **Why it matters:** Unsupported breaking contracts must not be silently
-  accepted.
-- **Current evidence:** No Shared Contracts version contract or package version
-  exists. The brief requires unsupported breaking versions to fail closed.
-- **Missing evidence:** Canonical version schema, compatibility policy,
-  transport location, error contract, and release history.
-- **Affected repositories:** `shared-contracts`, `platform-api`, Android,
-  Admin, Customer Mobile, and any Website API consumer.
-- **Contract impact:** Version acceptance/rejection helpers cannot be written
-  without inventing canonical meaning.
-- **Android impact:** Client upgrade and offline-retry behavior is unknown.
-- **Admin impact:** Browser/client compatibility behavior is unknown.
-- **Customer impact:** Client compatibility behavior is unknown.
-- **Website impact:** Public compatibility claims are not authorized.
-- **Security impact:** Fail-open negotiation can expose incompatible handlers.
-- **Privacy impact:** Version drift could change expected data fields.
-- **Persistence impact:** Compatibility migrations cannot be planned.
-- **Sync impact:** Queued/offline payload version handling is undefined.
-- **Offline impact:** Rejection and recovery for delayed payloads is undefined.
-- **Options:** Header; media type; envelope field; operation-specific explicit
-  version, as defined by Shared Contracts.
-- **Safest current recommendation:** Add no local version representation; block
-  request handling until the canonical version export exists.
-- **Required approvers:** Shared Contracts owner, Platform API architect, and
-  affected client owners.
-- **Blocking milestones:** API-1 acceptance/rejection tests and all versioned
-  operations.
+- **Status:** Approved for the API-1 boundary; transport negotiation remains
+  unresolved
+- **Decision:** Consume `ContractVersionSchema` and the package support
+  utilities directly; support only `0.1.0`; reject malformed or unsupported
+  values without fallback or coercion.
+- **Durable record:**
+  `decision-log/decisions/api-contract-002-version-enforcement.md`.
+- **Current evidence:** Shared Contracts exports the canonical version grammar,
+  `CURRENT_CONTRACT_VERSION`, `SUPPORTED_CONTRACT_VERSIONS`, and fail-closed
+  assertion helpers.
+- **Still unresolved:** Header/media-type/envelope placement, client upgrade
+  recovery, and HTTP error mapping belong to a later transport or operation
+  decision.
+- **Blocking milestones:** Any production operation whose transport version
+  negotiation is not separately approved.
 
 ## API-CONTRACT-003 — Outbound response validation
 
@@ -155,7 +134,8 @@ proposal only.
 - **Why it matters:** TypeScript alone cannot prove emitted runtime payloads
   conform to shared schemas.
 - **Current evidence:** The brief prefers inbound and outbound runtime
-  validation where practical; no response schema export or HTTP framework
+  validation where practical. API-1 proves public primitive schemas and a
+  transport-neutral adapter; no merchant response schema or HTTP framework
   exists.
 - **Missing evidence:** Public response schemas, performance budgets, error
   policy, sampling policy if any, and framework integration.
@@ -186,14 +166,15 @@ proposal only.
   canonical internal user identity, including lifecycle and failure behavior.
 - **Why it matters:** Authentication verification is not the same as identity,
   membership, or authorization.
-- **Current evidence:** No identity provider integration, user-identifier
-  contract, or identity store exists. Clerk integration is explicitly outside
-  this task.
+- **Current evidence:** `UserIdSchema` now validates opaque structure, but no
+  identity provider integration, trusted external-subject mapping, or identity
+  store exists. Clerk integration is explicitly outside this task.
 - **Missing evidence:** Provider choice, canonical user ID, linking rules,
   merge/recovery rules, revocation, tenant/stall boundaries, and audit policy.
 - **Affected repositories:** `shared-contracts`, `platform-api`, Android,
   Admin, Customer Mobile.
-- **Contract impact:** User identifiers and membership references are missing.
+- **Contract impact:** User ID structure is available; identity resolution and
+  membership references remain missing.
 - **Android impact:** Existing seller identity semantics must not be replaced
   or guessed.
 - **Admin impact:** Admin identity and privilege resolution remains undefined.
@@ -292,15 +273,16 @@ proposal only.
   fingerprinting, storage, retention, replay result, conflicts, and transaction
   coupling.
 - **Why it matters:** Retries must not duplicate approved mutations.
-- **Current evidence:** Idempotency identifier contracts, persistence, mutation
+- **Current evidence:** The v0.1 package has structured errors and opaque ID
+  primitives but no public idempotency-key contract. Persistence, mutation
   operations, and transaction technology are all absent.
 - **Missing evidence:** Canonical identifier, client retry behavior, operation
   taxonomy, durability target, retention, privacy classification, and recovery
   semantics.
 - **Affected repositories:** `shared-contracts`, `platform-api`, Android,
   Admin, Customer Mobile.
-- **Contract impact:** Idempotency identifiers and structured error responses
-  are missing.
+- **Contract impact:** The idempotency identifier and operation semantics remain
+  missing; shared structured errors alone do not resolve them.
 - **Android impact:** Offline retries and replay semantics are especially
   sensitive.
 - **Admin impact:** Retried privileged actions require deterministic results.
@@ -330,15 +312,18 @@ proposal only.
   reconciliation.
 - **Why it matters:** Adding a transport envelope does not establish business
   authority or correct offline conflict behavior.
-- **Current evidence:** Owner–Seller Mobile is the authority for implemented
-  offline operations. Shared Contracts has no sync envelope or sync-result
-  export. No server sync mutation is authorized.
-- **Missing evidence:** Android discovery, canonical sync contracts, per-entity
-  ownership, conflict rules, deletion semantics, versioning, and security
-  policy.
+- **Current evidence:** Owner–Seller Mobile remains the authority for
+  implemented offline operations. Shared Contracts exports four event names
+  and a limited `SyncEventSchema`, but no production sync request/result,
+  acknowledgement, batch, retry, conflict-resolution, tombstone, or authority
+  protocol. No server sync mutation is authorized.
+- **Missing evidence:** Approved Android operational discovery, production sync
+  request/result/protocol contracts, per-entity ownership, conflict rules,
+  deletion semantics, versioning, and security policy.
 - **Affected repositories:** `shared-contracts`, `platform-api`,
   `owner-seller-mobile`; potentially Admin and Customer Mobile.
-- **Contract impact:** Sync envelope and sync result are missing.
+- **Contract impact:** Limited operational event metadata is consumable; the
+  production sync envelope/result and protocol remain missing.
 - **Android impact:** High; current local operations and protected financial
   semantics must not be reinterpreted.
 - **Admin impact:** Server projections cannot imply authority over merchant
@@ -356,8 +341,9 @@ proposal only.
   local work.
 - **Options:** Android-authoritative replication; server-authoritative model;
   entity-specific authority; explicitly limited backup/export.
-- **Safest current recommendation:** Keep all sync mutations blocked and begin
-  with owner-approved Android evidence discovery plus Shared Contracts design.
+- **Safest current recommendation:** Keep all sync mutations blocked and use
+  owner-approved Android evidence plus new Shared Contracts design work only
+  through a separately authorized milestone.
 - **Required approvers:** Android product/domain owners, Shared Contracts
   owner, Platform API architect, security, privacy, and data owners.
 - **Blocking milestones:** Any sync endpoint, cloud-authority transfer, or
@@ -437,18 +423,21 @@ proposal only.
 ## API-AUDIT-001 — Audit-event persistence
 
 - **Status:** Blocked
-- **Decision needed:** Define audit event contract, event time/actor/subject,
-  tamper resistance, storage, retention, access, export, and failure behavior.
+- **Decision needed:** Define the production audit event policy,
+  event-time/actor/subject authority, tamper resistance, storage, retention,
+  access, export, and failure behavior around the limited shared shape.
 - **Why it matters:** Application logs are not a substitute for durable
   security and business audit evidence.
-- **Current evidence:** Shared Contracts has no audit-envelope export; identity,
-  authorization, persistence, operations, and privacy policies are absent.
-- **Missing evidence:** Canonical envelope, required events, actor resolution,
+- **Current evidence:** Shared Contracts exports a limited `AuditEventSchema`,
+  but identity, authorization, persistence, operation, and privacy policies are
+  absent.
+- **Missing evidence:** Required event policy, authoritative actor resolution,
   retention, legal/privacy basis, access model, integrity requirements, and
   storage.
 - **Affected repositories:** `shared-contracts`, `platform-api`, Android,
   Admin, Customer Mobile.
-- **Contract impact:** Audit envelope and correlation identifiers are missing.
+- **Contract impact:** A limited audit shape and correlation ID are consumable;
+  durable audit policy and persistence remain blocked.
 - **Android impact:** Local event evidence must not be relabeled as server audit
   without owner-approved semantics.
 - **Admin impact:** Privileged operations need strong actor and reason evidence.
@@ -464,9 +453,9 @@ proposal only.
   model.
 - **Options:** Append-only database records; managed audit store; approved
   event sink with durable guarantees.
-- **Safest current recommendation:** Define the canonical audit envelope and
-  event policy before choosing storage; fail an operation if its required audit
-  write cannot meet the approved guarantee.
+- **Safest current recommendation:** Use the shared limited shape only for
+  conformance; define the event policy before choosing storage; fail an
+  operation if its required audit write cannot meet the approved guarantee.
 - **Required approvers:** Shared Contracts, Platform API, security, privacy,
   data, and affected product owners.
 - **Blocking milestones:** Audited production operations and privileged Admin
@@ -480,13 +469,13 @@ proposal only.
 - **Why it matters:** Useful diagnosis must not expose credentials, personal
   data, or merchant payloads.
 - **Current evidence:** The architecture direction calls for structured
-  observability; no logger, provider, deployment, correlation contract, or data
-  classification exists.
-- **Missing evidence:** Hosting/log sink, approved correlation identifier,
+  observability and `CorrelationIdSchema` is consumable; no logger, provider,
+  deployment, or data classification exists.
+- **Missing evidence:** Hosting/log sink, correlation propagation policy,
   privacy classification, retention, support process, and cost limits.
 - **Affected repositories:** `platform-api`; operations and support.
 - **Contract impact:** Correlation identifiers and structured errors are
-  missing.
+  available primitives; logging policy remains Platform API-owned.
 - **Android impact:** Cross-system correlation is unavailable.
 - **Admin impact:** Privileged action diagnosis needs careful redaction.
 - **Customer impact:** Customer request logs may contain personal metadata.
@@ -548,8 +537,9 @@ proposal only.
   exemptions, distributed enforcement, errors, headers, and incident override.
 - **Why it matters:** Limits protect availability and abuse surfaces but can
   also reject legitimate offline retries or shared-network users.
-- **Current evidence:** No operation inventory, identity, traffic profile,
-  deployment topology, structured error contract, or sync behavior exists.
+- **Current evidence:** A structured error primitive exists, but no operation
+  inventory, identity, traffic profile, deployment topology, or production sync
+  behavior exists.
 - **Missing evidence:** Threat model, capacity targets, client retry policy,
   trusted proxy rules, tenancy keys, and support process.
 - **Affected repositories:** `platform-api` and every future consumer.
@@ -584,16 +574,17 @@ proposal only.
   remediation.
 - **Why it matters:** Contract compatibility and security upgrade enforcement
   must be predictable, especially for offline clients.
-- **Current evidence:** Shared Contracts has no app-version policy export; no
-  canonical contract version exists; current client release policies were not
-  inspected for this API-0 gate.
-- **Missing evidence:** Canonical schema, owning authority, Android/Admin/
-  Customer version sources, release channels, compatibility matrix, and error
-  behavior.
+- **Current evidence:** Shared Contracts exports app-version value/reference
+  primitives and a canonical contract-version support check. It does not export
+  a production minimum/supported client-version policy; current client release
+  policies were not approved for this milestone.
+- **Missing evidence:** Owning authority, Android/Admin/Customer version
+  sources, release channels, compatibility matrix, and error behavior.
 - **Affected repositories:** `shared-contracts`, `platform-api`, Android,
   Admin, Customer Mobile; Website for any public status wording.
-- **Contract impact:** App-version policy and structured unsupported-version
-  error are missing.
+- **Contract impact:** Version value schemas and
+  `UNSUPPORTED_CONTRACT_VERSION` exist; rollout and enforcement policy is
+  missing.
 - **Android impact:** Forced-update/offline recovery must respect release
   reality and local data safety.
 - **Admin impact:** Web build/version compatibility needs its own representation.
@@ -615,7 +606,9 @@ proposal only.
   request the Shared Contracts policy and cross-client approval.
 - **Required approvers:** Shared Contracts, Platform API, Android, Admin,
   Customer Mobile, security, and release owners.
-- **Blocking milestones:** Version enforcement and API-1 version-policy tests.
+- **Blocking milestones:** Production client-version enforcement and release
+  compatibility behavior; API-1 contract-version enforcement is independently
+  resolved by `API-CONTRACT-002`.
 
 ## API-PRIVACY-001 — Support-report data retention
 
@@ -624,14 +617,16 @@ proposal only.
   collection path, access, retention, deletion, export, and incident handling.
 - **Why it matters:** Diagnostic reports can combine identifiers, device data,
   logs, and business information.
-- **Current evidence:** No support-report contract, endpoint, storage, privacy
+- **Current evidence:** Shared Contracts exports a limited
+  `ProblemReportReferenceSchema`; no upload contract, endpoint, storage, privacy
   classification, support workflow, or retention policy exists.
 - **Missing evidence:** Approved use case, data inventory, legal/privacy basis,
   minimization, user controls, authorized support roles, and storage location.
 - **Affected repositories:** `shared-contracts`, `platform-api`, Android,
   Admin/support tooling, Customer Mobile if in scope.
-- **Contract impact:** A canonical report envelope and identifiers would be
-  required before external collection.
+- **Contract impact:** The limited shared reference may be validated, but a
+  collection/request contract and approved workflow are required before
+  external collection.
 - **Android impact:** Existing problem-report behavior must be inspected and
   approved before server collection.
 - **Admin impact:** Support access and redaction need explicit policy.
@@ -658,11 +653,10 @@ proposal only.
 
 ## Register-level coordination
 
-The first blocking dependency is an approved, implemented Shared Contracts
-public package surface. It must include at least the versioning and boundary
-contracts needed for any intended API-1 conformance shell. Separately, the
-local Platform API directory needs an approved Git bootstrap/reconciliation
-action; this task does not initialize or connect it.
+The Shared Contracts package and Git-bootstrap blockers are resolved for API-1.
+The first remaining blockers are operation-specific: framework/transport,
+merchant contracts, identity and authorization, persistence and idempotency,
+audit policy/storage, privacy, production sync, reliability, and deployment.
 
 No production milestone should begin from this register. Each decision that
 crosses an authority boundary must be promoted into a durable decision record

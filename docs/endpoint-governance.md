@@ -6,14 +6,26 @@ This document defines the evidence and approval record required for every
 future Platform API operation. It governs proposals; it does not authorize an
 endpoint or production behavior.
 
-As of 2026-07-25:
+Historical API-0 evidence at 2026-07-25 was:
 
 - the local Platform API repository began as an empty, non-Git directory;
 - the expected remote is empty and has an unborn HEAD;
 - no Platform API operation exists or is approved;
-- no verified Shared Contracts public package export is available for
+- no verified Shared Contracts public package export was available for
   Platform API consumption; and
-- API-1 is blocked.
+- API-1 was blocked.
+
+Current API-1 evidence at 2026-08-11 is:
+
+- API-0 is complete at
+  `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`;
+- Shared Contracts SC-0 through SC-4 are accepted and frozen for this phase;
+- `@kitamo/shared-contracts@0.1.0` is available at accepted commit
+  `a380f19f2adcf0557b424461f869aa3d0069e176`;
+- Platform API has a transport-neutral, public-export-only contract boundary;
+- no Platform API operation exists or is approved; and
+- no HTTP route, framework, listener, OpenAPI operation, authentication,
+  persistence, cloud integration, production sync, or deployment exists.
 
 **A route that compiles, starts, responds, passes tests, or appears in OpenAPI
 is not sufficient evidence that the operation is approved.**
@@ -41,43 +53,43 @@ Every future operation record must contain all fields below. `None` is valid
 only when supported by evidence and rationale; `TBD` is a blocker, not a
 completed field.
 
-| Field | Required content |
-| --- | --- |
-| Operation ID | Stable, unique Platform API identifier. The identifier format must be approved before use and must not reuse another repository's decision IDs. |
-| Purpose | One narrowly stated outcome and the evidence that the outcome belongs in Platform API. Avoid capability or roadmap claims. |
-| Consumer | Every known consumer repository or approved external caller, including the expected request context and compatibility obligations. |
-| Request contract | Exact Shared Contracts public import path, exported symbol, runtime validation capability, source evidence, and version. Locally copied or deep-imported schemas are prohibited. |
-| Response contract | Exact Shared Contracts public import path, exported symbol, runtime validation capability, source evidence, and version. Include success variants only when approved. |
-| Contract version | Version source, negotiation location, supported range, selection rules, and evidence tying the operation to that version. |
-| Authentication | Approved credential-verification mechanism, trust boundary, failure behavior, and referenced security decision. Authentication must not be inferred from route placement. |
-| Identity resolution | Approved mapping from verified external identity to canonical internal user or actor references, including ambiguity and failure behavior. |
-| Authorization policy | Named, approved policy; required inputs; decision owner; denial behavior; and tests. Authentication alone is not authorization. |
-| Business scope | The approved business boundary of the operation and the authority evidence for it. Platform API must not redefine merchant semantics. |
-| Stall scope | How canonical stall scope is resolved and authorized. Any Android `branch` compatibility mapping must cite a verified Shared Contracts public export. |
-| Idempotency policy | Whether required; key contract; caller and operation scope; persistence; retention; replay result; concurrency behavior; and mismatch or conflict response. |
-| Audit behavior | Approved event classification, Shared Contracts audit envelope, actor and target references, emission timing, failure behavior, persistence, access, and retention. |
-| Error behavior | Exact public structured-error and field-violation exports, transport-status mapping, safe internal-error mapping, and disclosure limits. |
-| Rate-limit behavior | Whether required; subject and scope; budget; window; storage; distributed behavior; response contract; headers; exemptions; and approval source. |
-| Transaction boundary | Atomic work, consistency expectation, ordering, concurrency control, rollback or compensation behavior, and retry ownership. |
-| Persistence dependencies | Every required store or repository port, data ownership, migration owner, transaction participation, retention, and failure behavior. |
-| External dependencies | Every outbound system or service, purpose, data classification, credentials, timeouts, retry policy, circuit behavior, fallback, and test strategy. |
-| Observability | Stable operation name, correlation propagation, safe logs, metrics, traces, alert conditions, redaction, sampling, and prohibited data. |
-| Privacy classification | Data classes handled, collection necessity, minimization, purpose, access, retention, deletion, residency constraints, and required privacy review. |
-| Backward-compatibility behavior | Supported consumer and contract versions, additive-change expectations, deprecation policy, migration path, and compatibility tests. |
-| Unsupported-version behavior | Detection point, fail-closed response, exact approved error contract, telemetry, and consumer recovery guidance. Never silently reinterpret. |
-| Open decisions | Every unresolved Platform API or cross-repository decision ID, owner, missing evidence, and whether it blocks implementation or release. |
-| Approval status | Status, named approving authority or authorities, approval evidence, date, conditions, expiration or revalidation trigger, and implementation/release limits. |
+| Field                           | Required content                                                                                                                                                                 |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Operation ID                    | Stable, unique Platform API identifier. The identifier format must be approved before use and must not reuse another repository's decision IDs.                                  |
+| Purpose                         | One narrowly stated outcome and the evidence that the outcome belongs in Platform API. Avoid capability or roadmap claims.                                                       |
+| Consumer                        | Every known consumer repository or approved external caller, including the expected request context and compatibility obligations.                                               |
+| Request contract                | Exact Shared Contracts public import path, exported symbol, runtime validation capability, source evidence, and version. Locally copied or deep-imported schemas are prohibited. |
+| Response contract               | Exact Shared Contracts public import path, exported symbol, runtime validation capability, source evidence, and version. Include success variants only when approved.            |
+| Contract version                | Version source, negotiation location, supported range, selection rules, and evidence tying the operation to that version.                                                        |
+| Authentication                  | Approved credential-verification mechanism, trust boundary, failure behavior, and referenced security decision. Authentication must not be inferred from route placement.        |
+| Identity resolution             | Approved mapping from verified external identity to canonical internal user or actor references, including ambiguity and failure behavior.                                       |
+| Authorization policy            | Named, approved policy; required inputs; decision owner; denial behavior; and tests. Authentication alone is not authorization.                                                  |
+| Business scope                  | The approved business boundary of the operation and the authority evidence for it. Platform API must not redefine merchant semantics.                                            |
+| Stall scope                     | How canonical stall scope is resolved and authorized. Any Android `branch` compatibility mapping must cite a verified Shared Contracts public export.                            |
+| Idempotency policy              | Whether required; key contract; caller and operation scope; persistence; retention; replay result; concurrency behavior; and mismatch or conflict response.                      |
+| Audit behavior                  | Approved event classification, Shared Contracts audit envelope, actor and target references, emission timing, failure behavior, persistence, access, and retention.              |
+| Error behavior                  | Exact public structured-error and field-violation exports, transport-status mapping, safe internal-error mapping, and disclosure limits.                                         |
+| Rate-limit behavior             | Whether required; subject and scope; budget; window; storage; distributed behavior; response contract; headers; exemptions; and approval source.                                 |
+| Transaction boundary            | Atomic work, consistency expectation, ordering, concurrency control, rollback or compensation behavior, and retry ownership.                                                     |
+| Persistence dependencies        | Every required store or repository port, data ownership, migration owner, transaction participation, retention, and failure behavior.                                            |
+| External dependencies           | Every outbound system or service, purpose, data classification, credentials, timeouts, retry policy, circuit behavior, fallback, and test strategy.                              |
+| Observability                   | Stable operation name, correlation propagation, safe logs, metrics, traces, alert conditions, redaction, sampling, and prohibited data.                                          |
+| Privacy classification          | Data classes handled, collection necessity, minimization, purpose, access, retention, deletion, residency constraints, and required privacy review.                              |
+| Backward-compatibility behavior | Supported consumer and contract versions, additive-change expectations, deprecation policy, migration path, and compatibility tests.                                             |
+| Unsupported-version behavior    | Detection point, fail-closed response, exact approved error contract, telemetry, and consumer recovery guidance. Never silently reinterpret.                                     |
+| Open decisions                  | Every unresolved Platform API or cross-repository decision ID, owner, missing evidence, and whether it blocks implementation or release.                                         |
+| Approval status                 | Status, named approving authority or authorities, approval evidence, date, conditions, expiration or revalidation trigger, and implementation/release limits.                    |
 
 ## Approval status
 
 The approval field must use one of these states:
 
-| Status | Meaning |
-| --- | --- |
-| Proposed | The operation record is being evaluated. No production implementation or exposure is authorized. |
-| Blocked | Named missing evidence or decision prevents approval or safe implementation. |
-| Approved | Explicit approval evidence exists from every required authority, with conditions recorded. Approval is never inferred from silence, code, tests, or a merge. |
-| Deprecated | An approved retirement or replacement path exists. Existing compatibility and removal conditions remain enforceable. |
+| Status     | Meaning                                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Proposed   | The operation record is being evaluated. No production implementation or exposure is authorized.                                                             |
+| Blocked    | Named missing evidence or decision prevents approval or safe implementation.                                                                                 |
+| Approved   | Explicit approval evidence exists from every required authority, with conditions recorded. Approval is never inferred from silence, code, tests, or a merge. |
+| Deprecated | An approved retirement or replacement path exists. Existing compatibility and removal conditions remain enforceable.                                         |
 
 An operation's implementation may separately be absent, prototyped, tested, or
 deployed. Those descriptions must never replace its approval status.
@@ -142,8 +154,13 @@ The presence of a TypeScript type alone does not prove runtime suitability.
 Source excluded from package exports is not consumable evidence. A proposed
 package name or version is not a published contract.
 
-Because no suitable Shared Contracts public export is currently verified, any
-contract-dependent operation record must be `Blocked`.
+The accepted v0.1 package now satisfies the package-level contract gate for its
+documented foundational primitives. It does not provide merchant-domain
+request/response contracts, membership or canonical role models, complete
+identity semantics, a production sync result/protocol, or a public Android
+`branch` compatibility adapter. An operation depending on those areas remains
+`Blocked`, as does any operation missing its independent identity,
+authorization, persistence, audit, privacy, reliability, or approval evidence.
 
 ## Identity and access gate
 
@@ -226,15 +243,17 @@ follow-up approval requirements.
 
 ## Current gate result
 
-The current result is **Blocked**:
+API-1 contract consumption is no longer blocked by package absence. Production
+operations remain **Blocked / not approved**:
 
 - there are no approved operation records;
-- the necessary Shared Contracts public exports are not verified;
+- merchant-domain request/response contracts are intentionally absent;
 - runtime, framework, identity, authorization, persistence, idempotency,
   audit, rate-limit, versioning, and deployment decisions remain unapproved;
   and
 - production behavior is outside the authorized milestone.
 
-The safe next step is to complete and review API-0 evidence, then obtain the
-missing Shared Contracts distribution and decision approvals before proposing
-any production-facing operation.
+The bounded safe next gate, after API-1 verification and CI acceptance, is
+API-2 server runtime and transport foundation under separate authorization.
+API-2 must not create a production-facing operation without a complete record
+and explicit approval under this document.

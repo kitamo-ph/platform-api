@@ -1,0 +1,24 @@
+# API-CONTRACT-002 — Contract-version enforcement
+
+- **ID:** API-CONTRACT-002
+- **Title:** Contract-version enforcement
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner; Shared Contracts authority for the canonical version utilities
+- **Approval evidence:** API-1 execution authorization and accepted `@kitamo/shared-contracts@0.1.0` version exports at SC commit `a380f19f2adcf0557b424461f869aa3d0069e176`
+- **Context:** API-1 needs a transport-neutral supported-version boundary. HTTP header, media-type, or envelope negotiation is not part of this milestone.
+- **Decision:** Consume `ContractVersionSchema`, `SUPPORTED_CONTRACT_VERSIONS`, and `assertSupportedContractVersion` from the declared `@kitamo/shared-contracts/versions` export. Support only `0.1.0`. Reject malformed and unsupported values without coercion, closest-match selection, `latest`, wildcard, or fallback.
+- **Rationale:** Canonical package utilities prevent a second version grammar and provide explicit fail-closed behavior.
+- **Alternatives:** Local semver parsing, permissive ranges, best-effort parsing, or a hard-coded unvalidated string were rejected.
+- **Consequences:** `v0.1.0`, `0.1`, `latest`, `*`, `foo`, `0.1.1`, `0.2.0`, and `1.0.0` are rejected. A new supported version requires an explicit change.
+- **Security impact:** Prevents incompatible payload handling from silently reaching future operations.
+- **Privacy impact:** Prevents fallback to a contract with different or less restrictive data fields.
+- **Persistence impact:** None in API-1; future persisted version provenance remains operation-specific.
+- **Compatibility impact:** Exact support only. Transport negotiation and client recovery remain unresolved future decisions.
+- **Affected repositories:** `platform-api`; future consumers are affected only after an operation is separately approved.
+- **Implementation gate:** All version inputs pass through `requireSupportedContractVersion` or an equivalent adapter call using the shared utilities.
+- **Verification:** Positive `0.1.0` fixture plus malformed and unsupported negative cases.
+- **Reconsideration conditions:** A new accepted Shared Contracts version or an approved transport-version negotiation decision.
+- **Supersedes:** None
+- **Superseded by:** None

@@ -87,3 +87,20 @@ Approved history is immutable. Do not rewrite an old decision to make a new
 choice appear historical. Create a new decision, set its `Supersedes` field,
 and update the old record's status to **Superseded** with a `Superseded by`
 link. Retain both records.
+
+## API-1 approved decisions
+
+| ID                 | Decision                                            | Scope                                              |
+| ------------------ | --------------------------------------------------- | -------------------------------------------------- |
+| `API-CONTRACT-001` | Exact source-archive package consumption            | Consumer acquisition/build/integrity only          |
+| `API-CONTRACT-002` | Fail-closed support for contract version `0.1.0`    | Transport-neutral version boundary only            |
+| `API-CONTRACT-005` | Declared public imports only                        | Prohibits internal/deep runtime dependencies       |
+| `API-CONTRACT-006` | Narrow adapter; no copied schemas                   | `src/contracts/` consumer boundary                 |
+| `API-CONTRACT-007` | API-1 is not an operation milestone                 | No endpoints or production integrations            |
+| `API-ARCH-003`     | API-1 remains transport-neutral                     | Does not approve Fastify or another framework      |
+| `API-AUTH-003`     | Structural validation is not identity/authorization | No principal, membership, role, or trust inference |
+
+`API-CONTRACT-003` retains its existing meaning, outbound response validation,
+and remains blocked for production operations. `API-CONTRACT-004` retains its
+existing meaning, production application-version policy, and remains blocked.
+Their IDs are not repurposed by API-1.

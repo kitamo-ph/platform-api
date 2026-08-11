@@ -1,187 +1,251 @@
 # KitaMo Platform API
 
-> **Foundation only:** this repository does not contain a server, production
-> endpoint, package, database, authentication integration, synchronization
-> implementation, or deployment configuration. Do not use it as a production
-> service.
-
-## Purpose
-
-Platform API is intended to implement approved Shared Contracts as trusted
-server operations. Its future responsibilities may include boundary
-validation, authentication verification, identity resolution, authorization,
-idempotency, application orchestration, transaction coordination, persistence
-adapters, audit-event production, and server observability.
-
-Those capabilities are not implemented or authorized by the current
-milestone. This repository must consume canonical meaning from verified Shared
-Contracts public exports; it must not invent or duplicate that meaning.
+> **Contract-consumer foundation only:** this repository has no HTTP server,
+> routes, production endpoint, persistence, authentication, Clerk, Supabase,
+> production synchronization, or deployment configuration. API-1 does not make
+> it a production service.
 
 ## Current status
 
-| Area | Status |
-| --- | --- |
-| Current milestone | API-0 repository bootstrap and evidence inventory |
-| Local baseline | Confirmed empty and non-Git at inspection |
-| Expected GitHub repository | Confirmed public and empty, with an unborn HEAD and no branch refs or commits |
-| Application code | Missing |
-| Package manager | npm is proposed; no manifest or lockfile exists and no choice is approved |
-| Runtime selection | Node `>=20.19.4` with Node `20.20.0` in CI is proposed; no repository version is pinned |
-| Server framework | Missing; Fastify is proposed, not approved |
-| Shared Contracts consumption | Blocked; all required public exports are missing |
-| API-1 validation shell | Blocked |
-| Tests and CI | Missing |
-| Production behavior | None |
+| Area                | Status                                                                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| API-0               | Complete; the 2026-07-25 repository and dependency evidence is preserved as historical baseline material                                        |
+| API-1               | Shared Contracts consumption foundation implemented; acceptance requires all local, clean-environment, and GitHub Actions gates to remain green |
+| Package/tooling     | npm, Node `>=20.19.4`, CI Node `20.20.0`, strict TypeScript 5.9, ESLint 9, Prettier 3, and Vitest                                               |
+| Shared Contracts    | `@kitamo/shared-contracts@0.1.0`, pinned to source commit `a380f19f2adcf0557b424461f869aa3d0069e176`                                            |
+| Contract boundary   | Transport-neutral adapter under `src/contracts/`; declared package exports only                                                                 |
+| Contract versions   | `0.1.0` only; malformed and unsupported versions fail closed                                                                                    |
+| Tests and CI        | Contract conformance, architecture, fixture, build, secret, and dependency-audit gates; no deployment job                                       |
+| Server framework    | Not selected; Fastify remains an API-0 proposal for a later milestone                                                                           |
+| Production behavior | None                                                                                                                                            |
 
-The expected public remote is
-`https://github.com/kitamo-ph/platform-api`. GitHub reports `main` as its
-default branch name, but `main` does not yet exist as a branch ref. The local
-directory was not initialized or connected to that remote during preflight.
+API-1 proves that Platform API can acquire, build, resolve, validate, and test
+the approved Shared Contracts package reproducibly. It does not approve an
+operation. A route compiling or a schema parsing does not authorize an
+endpoint.
+
+## Shared Contracts authority and pin
+
+The canonical cross-repository authority consumed here is:
+
+```text
+repository: https://github.com/kitamo-ph/shared-contracts.git
+commit:     a380f19f2adcf0557b424461f869aa3d0069e176
+package:    @kitamo/shared-contracts
+version:    0.1.0
+```
+
+The pin is recorded in `config/shared-contracts-pin.json`, `package.json`, and
+`package-lock.json`. Platform API never resolves an unpinned branch or
+`latest`.
+
+Shared Contracts is not published to npm. `npm ci` installs GitHub's source
+archive for the exact accepted commit through normal Node package resolution.
+`npm run prepare:contracts` then:
+
+1. validates the repository, archive URL, commit, package name, version,
+   declared export keys, lockfile URL, and lockfile SHA-512 integrity;
+2. builds the installed package copy with Platform API's pinned TypeScript
+   compiler;
+3. validates runtime package metadata;
+4. imports every approved public path; and
+5. proves prohibited internal subpaths remain unavailable.
+
+The process does not read or build an arbitrary `../shared-contracts` checkout.
+It does not edit Shared Contracts and it commits no generated dependency
+directory.
+
+A direct Git dependency was evaluated and rejected because the accepted
+producer package does not prepare a usable built export surface during that
+installation flow, and API-1 may not add a producer-side `prepare` script. A
+locally regenerated `npm pack` artifact was also rejected as the authority pin:
+its tarball bytes were not stable across the tested platforms. The accepted
+source archive has one reviewed lockfile integrity value, while its installed
+copy is built locally and its package/runtime identity is checked before use.
+
+Any absent archive, changed integrity, mismatched package identity or version,
+changed export map, wrong commit URL, failed build, unavailable public path, or
+unexpectedly importable internal path fails closed.
+
+See
+[`docs/shared-contracts-consumption.md`](docs/shared-contracts-consumption.md)
+for the complete mechanism, import surface, 24-area matrix, limitations, and
+historical API-0 evidence.
+
+## Contract boundary
+
+Canonical application imports flow in one direction:
+
+```text
+Platform API consumer
+    -> src/contracts
+        -> @kitamo/shared-contracts declared public paths
+```
+
+`src/contracts/` may re-export approved public schemas, record package
+evidence, enforce the supported contract version, and provide narrow
+Platform API parsing helpers. It must not copy, broaden, weaken, or reinterpret
+Shared Contracts schemas.
+
+Runtime code may import only:
+
+```text
+@kitamo/shared-contracts
+@kitamo/shared-contracts/common
+@kitamo/shared-contracts/identifiers
+@kitamo/shared-contracts/businesses
+@kitamo/shared-contracts/stalls
+@kitamo/shared-contracts/time
+@kitamo/shared-contracts/money
+@kitamo/shared-contracts/units
+@kitamo/shared-contracts/versions
+@kitamo/shared-contracts/pagination
+@kitamo/shared-contracts/errors
+@kitamo/shared-contracts/sync
+@kitamo/shared-contracts/audit
+@kitamo/shared-contracts/support
+```
+
+Imports from `src/**`, `compatibility/**`, `conformance/**`, `tests/**`,
+`scripts/**`, documentation, generated internals, or any undeclared package
+subpath are prohibited runtime dependencies.
+
+## Development
+
+Prerequisites:
+
+- Node.js `>=20.19.4`;
+- npm `10.8.2` or the compatible npm version recorded by the lockfile; and
+- network access to the exact GitHub source archive during a clean install.
+
+Install and verify:
+
+```bash
+npm ci
+npm run verify
+```
+
+Available quality commands:
+
+```bash
+npm run prepare:contracts
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run check:contracts
+npm run check:architecture
+npm run security:secrets
+npm run audit
+npm run verify
+```
+
+`verify` reacquires or verifies the installed contract boundary, then runs the
+format, lint, strict typecheck, full test, explicit contract and architecture
+suites, build, extension-agnostic secret scan, and high-severity npm audit
+gates. The named suites are independently required even though the full test
+run also discovers them.
+
+## What is consumable
+
+API-1 consumes foundational public primitives for package metadata, bounded
+text/privacy classes, opaque identifiers, business/stall references, time,
+money wire values, decimal quantities, the current bounded unit registry,
+contract/app version values, pagination metadata, structured errors, field
+issues, the four limited sync event names and event shape, limited audit-event
+metadata, and the limited ProblemReport reference.
+
+These exports do not establish authenticated identity, authorization,
+membership, canonical roles, persistence, audit retention, cursor lifecycle,
+money calculations, unit conversion, production synchronization, support
+workflow, or production app-version policy.
+
+> Structural validation is not identity resolution or authorization.
+
+## Still blocked
+
+API-1 intentionally provides no runtime contracts or operations for sales,
+sale items, products, inventory, ingredients, recipes, production, COGS, fixed
+costs, refunds, voids, corrections, subscriptions, payments, customer orders,
+loyalty, memberships, a canonical role model, a complete identity model, or a
+complete production synchronization protocol.
+
+The following remain independently unresolved or blocked:
+
+- HTTP framework approval and server/transport design;
+- every production operation record;
+- Clerk or other credential verification and external-to-canonical user
+  mapping;
+- membership, role, authorization, and stall-scope policy;
+- persistence technology, RLS, migrations, transactions, and idempotency
+  storage;
+- rate limiting, CORS, observability provider, and production secret handling;
+- audit persistence, access, retention, and failure policy;
+- synchronization ownership, upload/pull, retries, acknowledgements, batches,
+  conflicts, tombstones, cloud versions, and Android queue mapping;
+- production support workflow and data retention;
+- deployment and production external integrations; and
+- Android `branch` to canonical `stall` runtime conversion, because the v0.1
+  package does not export that compatibility mapping.
+
+Canonical Platform API code uses `stall` and `stall_id`; it does not introduce
+`branch_id`.
 
 ## Authority boundaries
 
-- **Owner–Seller Mobile** remains the evidence and operational authority for
-  currently implemented merchant behavior, including checkout, sales,
-  inventory, production, COGS, spoilage, transfers, fixed expenses, and
-  reports.
-- The protected formula remains:
+- **Owner–Seller Mobile** remains the operational evidence authority for
+  implemented merchant behavior.
+- The protected formula remains
   `Revenue - Sold COGS - Fixed Costs - Spoilage = Net Profit`.
-- **Shared Contracts** owns canonical cross-repository identifiers,
-  terminology, money, quantities, units, timestamps, timezones, versions,
-  structured errors, pagination, audit and synchronization envelopes, shared
-  enums, and compatibility mappings.
-- **Platform API** may implement approved contracts as trusted server
-  operations, but it may not copy schemas, deep-import internal contract
-  modules, redefine merchant semantics, or treat proposals as approval.
-- **Admin**, **Customer Mobile**, and **Website** retain their own workflow,
+- **Shared Contracts** owns canonical cross-repository contract meaning.
+- **Platform API** owns this consumer boundary and may later implement only
+  separately approved operations.
+- **Admin**, **Customer Mobile**, and **Website** retain their workflow,
   experience, projection, and public-claims responsibilities.
 
-## Current milestone
+## Historical API-0 baseline
 
-API-0 records repository evidence, authority boundaries, architecture
-proposals, endpoint governance, and unresolved decisions. It creates no
-production behavior.
+On 2026-07-25 the local Platform API path was empty and non-Git, the public
+remote had no refs, and Shared Contracts had no package, source exports, commit,
+tests, fixtures, or distribution. API-0 correctly recorded API-1 as blocked.
+That finding remains historical evidence; it is not the current dependency
+state.
 
-API-1 may begin only when Shared Contracts supplies verified public exports
-through an identifiable approved version or commit. The local Shared Contracts
-workspace is non-Git and contains only a preflight inventory document; its
-public repository is empty. All 24 contract areas required by the bootstrap
-brief are missing, so API-1 is blocked.
-
-## Prerequisites
-
-The current repository is documentation-only. Reviewing it requires:
-
-- access to this local workspace;
-- access to the verified GitHub repository metadata when remote identity must
-  be rechecked; and
-- no production credentials.
-
-The inspected workstation had Node.js `v20.20.2`, npm `10.8.2`, Corepack
-`0.34.6`, and pnpm `9.15.9`; Yarn was absent. These installed tools are
-environment evidence only. They are not repository prerequisites or proof
-that a package manager, runtime, or framework has been selected.
-
-## Available commands
-
-There is no `package.json`, so there are no npm, build, lint, format,
-typecheck, test, start, or development commands.
-
-The following read-only preflight commands can be used to inspect the local
-state:
-
-```bash
-pwd
-git rev-parse --show-toplevel 2>/dev/null || true
-git status --short --branch 2>/dev/null || true
-git remote -v 2>/dev/null || true
-git branch --show-current 2>/dev/null || true
-git rev-parse HEAD 2>/dev/null || true
-find . -maxdepth 3 -type f \
-  ! -path './.git/*' \
-  ! -path './node_modules/*' \
-  | sort
-node --version 2>/dev/null || true
-```
-
-Until Git initialization or remote connection is explicitly authorized, Git
-commands that require a repository are expected to report that this directory
-is not a Git repository.
-
-## Development status
-
-No application can be installed, started, built, tested, or deployed from the
-current repository. There are:
-
-- no package or dependencies;
-- no source files or routes;
-- no runtime or response validation;
-- no Shared Contracts imports;
-- no compatibility adapters;
-- no persistence or migrations;
-- no authentication or authorization;
-- no audit or synchronization behavior;
-- no tests or CI; and
-- no deployment or production environment configuration.
-
-A compiling route, passing test, generated OpenAPI document, or documented
-proposal would not by itself prove that an operation is approved.
+Platform API was then initialized and its accepted API-0 evidence was published
+at commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`. Shared Contracts subsequently
+completed SC-0 through SC-4 and froze the accepted v0.1 package at
+`a380f19f2adcf0557b424461f869aa3d0069e176`, unblocking only this bounded API-1
+consumer foundation.
 
 ## Documentation map
 
-- [`docs/repository-inventory.md`](docs/repository-inventory.md) — baseline
-  local, remote, runtime, dependency, and blocker evidence.
-- [`docs/architecture.md`](docs/architecture.md) — proposed smallest safe
-  modular-service architecture; no framework approval.
+- [`docs/repository-inventory.md`](docs/repository-inventory.md) — current
+  inventory plus preserved API-0 baseline.
+- [`docs/architecture.md`](docs/architecture.md) — transport-neutral API-1
+  contract boundary and later server proposal.
 - [`docs/endpoint-governance.md`](docs/endpoint-governance.md) — evidence and
-  approval record required before any future operation.
+  approval required before any future operation.
 - [`docs/shared-contracts-consumption.md`](docs/shared-contracts-consumption.md)
-  — Shared Contracts evidence, consumption matrix, and dependency gate.
-- [`docs/unresolved-decisions.md`](docs/unresolved-decisions.md) — Platform API
-  decision register.
-- [`decision-log/README.md`](decision-log/README.md) — durable decision
-  identifiers, statuses, required fields, and approval rules.
-- `.kitamo/STATUS.md` — local ignored handoff state; never the sole record of a
-  durable architectural decision.
-
-The presence of a documentation path does not imply that its decisions are
-approved or its described capabilities are implemented.
+  — pin mechanism, public symbols, matrix, limitations, and historical evidence.
+- [`docs/unresolved-decisions.md`](docs/unresolved-decisions.md) — decisions that
+  remain open after API-1.
+- [`decision-log/`](decision-log/) — durable approved API-1 decisions and
+  decision rules.
+- `.kitamo/STATUS.md` — ignored local handoff state; never the sole record of a
+  durable decision.
 
 ## Security and production warning
 
 Do not add real credentials, production environment values, service-role
-secrets, tokens, private keys, or customer and merchant data. No
-authentication, identity resolution, authorization, rate limiting, CORS,
-privacy retention, audit persistence, or security-hardening implementation
-exists.
+secrets, tokens, private keys, passwords, or customer and merchant data. Do not
+connect to Clerk, Supabase, payment systems, file storage, webhooks, queues, or
+event buses. Do not run production migrations, publish a package, deploy, or
+expose an endpoint from API-1.
 
-Do not connect to Clerk, Supabase, payment systems, file storage, webhooks,
-queues, event buses, or other production services. Do not run migrations,
-change cloud resources, deploy, publish a package, or expose an endpoint from
-this foundation.
+## Next gate
 
-## Non-goals
-
-The current work does not include:
-
-- final framework, runtime, deployment, or persistence approval;
-- production HTTP operations or OpenAPI publication;
-- merchant, Admin, Customer, or Website APIs;
-- Android schema mirroring or cloud-authority transfer;
-- checkout, inventory, recipe, production, COGS, spoilage, fixed-cost, or
-  other merchant synchronization;
-- Clerk, Supabase, RLS, identity-provider, or database integration;
-- persistent idempotency, audit storage, queues, webhooks, or event buses;
-- payments, billing, loyalty, ordering, uploads, or public integrations;
-- package publication, deployment, DNS changes, cloud-resource changes,
-  production migrations, commits, or pushes.
-
-## Next safe action
-
-Keep API-0 evidence current and obtain the missing Shared Contracts public
-distribution and approvals. Before API-1, record the exact package version or
-Git commit, public import paths, runtime validation support, tests, fixtures,
-compatibility behavior, and consumer suitability.
-
-Until then, do not create substitute schemas, deep imports, production
-payloads, routes, or compatibility mappings.
+After API-1 is accepted locally and in GitHub Actions, the recommended next
+milestone is **API-2 — Server Runtime and Transport Foundation**. API-2 requires
+its own authorization and must not infer approval for merchant endpoints or
+production integrations.

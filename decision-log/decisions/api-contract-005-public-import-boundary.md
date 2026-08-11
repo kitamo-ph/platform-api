@@ -1,0 +1,24 @@
+# API-CONTRACT-005 — Public-import-only contract boundary
+
+- **ID:** API-CONTRACT-005
+- **Title:** Public-import-only contract boundary
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner; Shared Contracts authority for the accepted export map
+- **Approval evidence:** API-1 execution authorization and the SC-4 public surface for `@kitamo/shared-contracts@0.1.0`
+- **Context:** The accepted package exposes 14 declared public paths and intentionally hides source, compatibility, conformance, test, script, documentation, and generated internals.
+- **Decision:** Runtime code may import only the declared package root and `common`, `identifiers`, `businesses`, `stalls`, `time`, `money`, `units`, `versions`, `pagination`, `errors`, `sync`, `audit`, and `support` subpaths. All Shared Contracts imports are centralized under `src/contracts/`. Undeclared or internal paths are prohibited.
+- **Rationale:** The export map is the supported cross-repository contract surface. Deep imports bypass compatibility and governance controls.
+- **Alternatives:** Direct source-relative imports, compatibility imports, generated-schema imports, and duplicated local definitions were rejected.
+- **Consequences:** Internal SC artifacts may be inspected read-only as evidence but cannot become runtime dependencies. Some mappings, including Android `branch` compatibility, remain unavailable.
+- **Security impact:** Prevents bypassing strict reviewed schemas through internal helpers or draft artifacts.
+- **Privacy impact:** Prevents unreviewed discovery/compatibility fields from becoming API data contracts.
+- **Persistence impact:** Contract objects remain transport/application boundary values and are not persistence models.
+- **Compatibility impact:** Only producer-declared public paths may be relied on; export changes require review.
+- **Affected repositories:** `platform-api` and `shared-contracts` as producer authority; no sibling mutation.
+- **Implementation gate:** Architecture scans and runtime import checks must reject prohibited paths.
+- **Verification:** Import every approved path; require `ERR_PACKAGE_PATH_NOT_EXPORTED` for prohibited paths; scan canonical source for source-relative or deep imports.
+- **Reconsideration conditions:** A new accepted package export map or an approved producer release.
+- **Supersedes:** None
+- **Superseded by:** None

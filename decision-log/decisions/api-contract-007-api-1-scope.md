@@ -1,0 +1,24 @@
+# API-CONTRACT-007 — API-1 is a consumer foundation, not an operation milestone
+
+- **ID:** API-CONTRACT-007
+- **Title:** API-1 is a consumer foundation, not an operation milestone
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** API-1 execution authorization and explicit milestone non-goals dated 2026-08-11
+- **Context:** SC-4 unblocks consumption of foundational public contracts but intentionally omits merchant-domain request/response contracts and production policy.
+- **Decision:** API-1 adds no server, listener, route, HTTP handler, OpenAPI operation, merchant endpoint, authentication, authorization, persistence, cloud integration, production sync, privileged mutation, or deployment.
+- **Rationale:** Package availability does not establish product semantics, operation approval, or production readiness.
+- **Alternatives:** Scaffolding a preferred framework or placeholder routes was rejected because Fastify remains Proposed and no operation is approved.
+- **Consequences:** The repository becomes executable for contract verification only. Production capabilities remain absent.
+- **Security impact:** Avoids exposing unauthenticated or under-specified operations.
+- **Privacy impact:** No production data collection or external transfer is introduced.
+- **Persistence impact:** No database, schema, migration, RLS, transaction, or durable state.
+- **Compatibility impact:** Consumers receive no endpoint promise from API-1.
+- **Affected repositories:** `platform-api`; Admin, Android, Customer Mobile, Website, and Shared Contracts remain unchanged.
+- **Implementation gate:** Prohibited-scope scans must find no server/framework/auth/persistence/cloud/deployment artifacts.
+- **Verification:** Architecture tests and explicit searches for listeners, routes, framework constructors, database/Clerk/Supabase clients, queues, webhooks, and deployment configuration.
+- **Reconsideration conditions:** Separate authorization for API-2 or a later operation milestone with complete governance evidence.
+- **Supersedes:** None
+- **Superseded by:** None

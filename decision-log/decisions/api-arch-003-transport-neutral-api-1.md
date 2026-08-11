@@ -1,0 +1,24 @@
+# API-ARCH-003 — API-1 remains transport-neutral
+
+- **ID:** API-ARCH-003
+- **Title:** API-1 remains transport-neutral
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** API-1 execution authorization; API-0 `API-ARCH-001` remains Proposed
+- **Context:** API-0 identified Fastify as a preferred candidate but did not approve it. Contract acquisition, version enforcement, and schema conformance do not require an HTTP framework.
+- **Decision:** Build the API-1 package and adapter as transport-neutral TypeScript. Do not install or scaffold Fastify, Hono, Express, an HTTP listener, route registration, or OpenAPI routes.
+- **Rationale:** Separates the contract foundation from later deployment and transport decisions and avoids implying endpoint approval.
+- **Alternatives:** Premature Fastify, Hono, Express, or Node HTTP scaffolds were rejected.
+- **Consequences:** API-2 must separately select and verify the runtime/transport architecture.
+- **Security impact:** No HTTP attack surface is introduced in API-1.
+- **Privacy impact:** No request transport or logging path is introduced.
+- **Persistence impact:** None.
+- **Compatibility impact:** Contract tests remain independent of a future framework choice.
+- **Affected repositories:** `platform-api` only.
+- **Implementation gate:** Application and contract code must not import framework objects.
+- **Verification:** Dependency manifest checks and architecture scans for framework/listener/route construction.
+- **Reconsideration conditions:** API-2 authorization and approval of `API-ARCH-001` or its successor.
+- **Supersedes:** None
+- **Superseded by:** None

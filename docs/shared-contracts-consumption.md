@@ -1,12 +1,180 @@
 # Shared Contracts Consumption Evidence
 
+## Current API-1 outcome (2026-08-11)
+
+```text
+API-0: complete
+Shared Contracts SC-0 through SC-4: complete and frozen for this phase
+API-1: bounded Shared Contracts consumer foundation implemented
+Production API implementation: not authorized
+```
+
+The accepted authority is:
+
+| Field                      | Exact value                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Source repository          | `https://github.com/kitamo-ph/shared-contracts.git`                                                      |
+| Accepted commit            | `a380f19f2adcf0557b424461f869aa3d0069e176`                                                               |
+| Package                    | `@kitamo/shared-contracts`                                                                               |
+| Package version            | `0.1.0`                                                                                                  |
+| Source archive             | `https://codeload.github.com/kitamo-ph/shared-contracts/tar.gz/a380f19f2adcf0557b424461f869aa3d0069e176` |
+| Reviewed archive integrity | `sha512-uLlwo+G8LI6PYl54Br3cunSP20AqXPEQfotq0tMLvDwuvcKw1+LEym1FRbIF0OZ8U8wHjNx6oCAt7neRCuIhMQ==`        |
+| Pin record                 | `config/shared-contracts-pin.json`                                                                       |
+| Runtime boundary           | `src/contracts/shared-contracts.ts`                                                                      |
+
+This resolves the historical package-absence blocker only. It does not create
+merchant-domain schemas, an authenticated principal, authorization, database
+models, production sync, audit persistence, support workflow, routes, or a
+server.
+
+## Reproducible acquisition and build
+
+Shared Contracts is intentionally not published to npm. Platform API uses the
+exact GitHub source archive for the accepted commit as its normal npm
+dependency. The manifest, lockfile, and pin record must all name the same
+archive. `npm ci` verifies and installs the lockfile artifact under
+`node_modules/@kitamo/shared-contracts` without reading any sibling checkout.
+
+The archive contains the accepted source and package metadata but not a
+prebuilt `dist` directory. `npm run prepare:contracts` therefore performs the
+consumer-owned preparation step:
+
+1. enforce Node `>=20.19.4`;
+2. validate the pin record shape and exact repository/archive/commit/package/
+   version values;
+3. validate `package.json` and lockfile v3 resolution and SHA-512 integrity;
+4. validate the installed package name, version, and exact export keys;
+5. compile only the installed package copy using Platform API's pinned
+   TypeScript compiler;
+6. validate runtime package metadata;
+7. import all 14 approved public paths; and
+8. require `ERR_PACKAGE_PATH_NOT_EXPORTED` for the prohibited `src`,
+   `compatibility`, `conformance`, `scripts`, `tests`, `docs`, and `generated`
+   subpaths.
+
+The build never edits `~/Documents/KitaMo-ph/shared-contracts`. Generated
+dependency output remains under ignored `node_modules` and is never committed.
+CI runs the same `npm ci` and `npm run verify` workflow from a clean checkout.
+
+### Evaluated alternatives
+
+| Mechanism                                                      | Decision                           | Evidence and reason                                                                                                                                                                                      |
+| -------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unpinned branch or `latest`                                    | Rejected                           | Mutable authority; cannot prove the accepted commit or fail closed                                                                                                                                       |
+| Arbitrary `../shared-contracts` checkout or `file:` dependency | Rejected                           | Depends on developer-local sibling state and is not CI-safe                                                                                                                                              |
+| Direct Git dependency at the commit                            | Rejected                           | The accepted producer uses `prepack`, not a consumer-install `prepare` lifecycle, so the tested flow did not provide a usable built declared export surface; API-1 may not modify the producer to fix it |
+| Locally regenerated `npm pack` tarball                         | Rejected as the authority artifact | Although its contents could be consumed, the tarball bytes differed across the tested platforms, so one committed byte-integrity pin would not be reproducible cross-platform                            |
+| Exact GitHub source archive plus consumer-local build          | Accepted                           | Immutable commit URL, lockfile integrity, normal Node resolution, no sibling-state dependency, no copied schemas, no producer mutation, and deterministic semantic/package checks                        |
+
+### Fail-closed behavior
+
+Preparation fails on a malformed pin, wrong commit URL, wrong repository,
+wrong package name or version, lockfile drift, wrong integrity, absent package,
+changed export keys, build failure, runtime metadata mismatch, missing public
+path, or newly reachable prohibited subpath. There is no fallback to `main`,
+`latest`, another version, an existing sibling, or a locally cached substitute.
+
+## Approved public imports and symbols actually consumed
+
+All imports are centralized in `src/contracts/shared-contracts.ts`.
+
+| Public package path                    | Symbols consumed or re-exported by the Platform API boundary                                                                                                                                                                                                                                                                                          |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@kitamo/shared-contracts`             | `PUBLIC_EXPORT_PATHS`, `SHARED_CONTRACTS_PACKAGE_NAME`, `SHARED_CONTRACTS_VERSION`                                                                                                                                                                                                                                                                    |
+| `@kitamo/shared-contracts/common`      | `NonEmptyStringSchema`, `SafeDisplayTextSchema`, `PrivacyClassSchema` and their inferred types                                                                                                                                                                                                                                                        |
+| `@kitamo/shared-contracts/identifiers` | `EntityIdSchema`, `BusinessIdSchema`, `StallIdSchema`, `UserIdSchema`, `DeviceIdSchema`, `ProblemReportIdSchema`, `AuditEventIdSchema`, `SyncEventIdSchema`, `AppVersionIdSchema`, `CorrelationIdSchema` and their inferred types                                                                                                                     |
+| `@kitamo/shared-contracts/businesses`  | `BusinessReferenceSchema`, `BusinessReference`                                                                                                                                                                                                                                                                                                        |
+| `@kitamo/shared-contracts/stalls`      | `StallReferenceSchema`, `StallReference`                                                                                                                                                                                                                                                                                                              |
+| `@kitamo/shared-contracts/time`        | `UtcInstantSchema`, `CalendarDateSchema`, `IanaTimezoneSchema`, `DEFAULT_BUSINESS_TIMEZONE`, `TemporalSemanticFieldSchema` and their inferred types                                                                                                                                                                                                   |
+| `@kitamo/shared-contracts/money`       | `CurrencyCodeSchema`, `MoneyMinorAmountSchema`, `NonNegativeMoneyMinorAmountSchema`, `HighPrecisionDecimalSchema`, `MoneyValueSchema`, `NonNegativeMoneyValueSchema` and their inferred types                                                                                                                                                         |
+| `@kitamo/shared-contracts/units`       | `SignedQuantityDecimalSchema`, `NonNegativeQuantityDecimalSchema`, `KnownPhysicalUnitCodeSchema`, `PackagingUnitCodeSchema`, `UnitReferenceSchema`, `QuantityWithUnitSchema` and their inferred types                                                                                                                                                 |
+| `@kitamo/shared-contracts/versions`    | `ContractVersionSchema`, `SchemaVersionSchema`, `CURRENT_CONTRACT_VERSION`, `SUPPORTED_CONTRACT_VERSIONS`, `isSupportedContractVersion`, `assertSupportedContractVersion`, `UnsupportedContractVersionError`, `PlatformSchema`, `AppVersionNameSchema`, `AppVersionCodeSchema`, `AppVersionReferenceSchema`, `ContractMetadataSchema` and their types |
+| `@kitamo/shared-contracts/pagination`  | `PageSizeSchema`, `OpaqueCursorSchema`, `PaginationRequestSchema`, `PaginationMetadataSchema`, `createPaginatedResultSchema` and their types                                                                                                                                                                                                          |
+| `@kitamo/shared-contracts/errors`      | `StructuredErrorCodeSchema`, `FieldIssueSchema`, `StructuredErrorSchema` and their types                                                                                                                                                                                                                                                              |
+| `@kitamo/shared-contracts/sync`        | `SyncEventNameSchema`, `SyncEventSchema` and their types                                                                                                                                                                                                                                                                                              |
+| `@kitamo/shared-contracts/audit`       | `AuditOutcomeSchema`, `AuditEventSchema` and their types                                                                                                                                                                                                                                                                                              |
+| `@kitamo/shared-contracts/support`     | `ProblemReportCategoryCodeSchema`, `ProblemReportStatusCodeSchema`, `ProblemReportReferenceSchema` and their types                                                                                                                                                                                                                                    |
+
+Platform API does not deep-import Shared Contracts source, compatibility,
+conformance, generated, script, test, or documentation files. Those artifacts
+may be inspected read-only as governance evidence but are not runtime
+dependencies.
+
+## Current 24-area consumption matrix
+
+Every row below is evaluated against package version `0.1.0` and accepted SC
+commit `a380f19f2adcf0557b424461f869aa3d0069e176`.
+
+| Contract area                                       | Classification                          | Exact public path and symbol(s)                                                                                                                           | Version / SC commit                                  | Platform API adapter and tests                                                | Limitation or blocker                                                                                                       |
+| --------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Contract version                                    | **Confirmed**                           | `@kitamo/shared-contracts/versions`: `ContractVersionSchema`, `CURRENT_CONTRACT_VERSION`, `SUPPORTED_CONTRACT_VERSIONS`, `assertSupportedContractVersion` | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | `requireSupportedContractVersion`; valid, malformed, and unsupported fixtures | Only `0.1.0` is supported; HTTP negotiation belongs to API-2 or an operation decision                                       |
+| Opaque identifiers                                  | **Confirmed with limits**               | `@kitamo/shared-contracts/identifiers`: `EntityIdSchema` and branded ID schemas                                                                           | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Re-export through adapter; valid/invalid/round-trip tests                     | No generation, prefix parsing, UUID assumption, or entity inference                                                         |
+| Business identifiers                                | **Confirmed**                           | `@kitamo/shared-contracts/identifiers`: `BusinessIdSchema`; `@kitamo/shared-contracts/businesses`: `BusinessReferenceSchema`                              | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Public adapter and business-reference fixtures                                | Structural scope only; no ownership or authorization                                                                        |
+| Stall identifiers                                   | **Confirmed with limits**               | `@kitamo/shared-contracts/identifiers`: `StallIdSchema`; `@kitamo/shared-contracts/stalls`: `StallReferenceSchema`                                        | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Public adapter and stall-reference fixtures; source scan rejects `branch_id`  | No Android `branch` conversion or authorization semantics                                                                   |
+| User identifiers                                    | **Limited**                             | `@kitamo/shared-contracts/identifiers`: `UserIdSchema`                                                                                                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Structural schema tests only                                                  | No Clerk mapping, canonical identity resolution, membership, or trust                                                       |
+| Device identifiers                                  | **Limited**                             | `@kitamo/shared-contracts/identifiers`: `DeviceIdSchema`                                                                                                  | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Structural schema tests only                                                  | Device ID is not authenticated ownership or sync authority                                                                  |
+| Timestamps                                          | **Confirmed**                           | `@kitamo/shared-contracts/time`: `UtcInstantSchema`, `CalendarDateSchema`, `TemporalSemanticFieldSchema`                                                  | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Canonical `Z`, invalid offset/non-date, and date-vs-instant fixtures          | No Android historical-date migration                                                                                        |
+| Timezone                                            | **Confirmed**                           | `@kitamo/shared-contracts/time`: `IanaTimezoneSchema`, `DEFAULT_BUSINESS_TIMEZONE`                                                                        | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | `Asia/Manila` and invalid-zone tests                                          | No silent timezone default at an operation boundary                                                                         |
+| Currency                                            | **Limited**                             | `@kitamo/shared-contracts/money`: `CurrencyCodeSchema`                                                                                                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Uppercase three-letter syntax tests                                           | ISO-4217-shaped syntax only; no local currency registry or policy                                                           |
+| Money                                               | **Limited**                             | `@kitamo/shared-contracts/money`: minor-amount and money-value schemas                                                                                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Integer/minor-unit positive and negative fixtures                             | Wire primitives only; no REAL migration, rounding, price, profit, COGS, or arithmetic                                       |
+| Decimal quantity                                    | **Limited**                             | `@kitamo/shared-contracts/units`: signed/non-negative quantity schemas; `@kitamo/shared-contracts/money`: `HighPrecisionDecimalSchema`                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Precision/grammar tests                                                       | Serialization only; no stock math or business calculation                                                                   |
+| Units                                               | **Limited**                             | `@kitamo/shared-contracts/units`: unit-code, reference, and quantity-with-unit schemas                                                                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Current `g`, `kg`, and packaging-registry tests                               | Bounded registry only; no aliases, local vocabulary expansion, or conversion                                                |
+| Pagination                                          | **Limited**                             | `@kitamo/shared-contracts/pagination`: request, page-size, opaque-cursor, metadata, result helper                                                         | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Bounds, opacity, and `has_more`/`next_cursor` invariant tests                 | Cursor encoding, stable ordering, expiry, filtering, and lifecycle are operation-specific                                   |
+| Structured errors                                   | **Limited**                             | `@kitamo/shared-contracts/errors`: `StructuredErrorCodeSchema`, `StructuredErrorSchema`                                                                   | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | All approved codes, unknown code, correlation, retryability, strictness tests | No HTTP status mapping, localization policy, or internal-error disclosure mapping                                           |
+| Field-level violations                              | **Confirmed with limits**               | `@kitamo/shared-contracts/errors`: `FieldIssueSchema`                                                                                                     | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Path/code/message and strictness fixtures                                     | Used only inside the shared error boundary; no competing envelope                                                           |
+| Audit envelope                                      | **Limited**                             | `@kitamo/shared-contracts/audit`: `AuditOutcomeSchema`, `AuditEventSchema`                                                                                | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Positive/negative audit fixtures                                              | Metadata shape only; actor/role authority, event policy, persistence, integrity, access, and retention blocked              |
+| Correlation identifiers                             | **Confirmed**                           | `@kitamo/shared-contracts/identifiers`: `CorrelationIdSchema`                                                                                             | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Contract-context and identifier tests                                         | Correlation is observability context, not identity or authorization                                                         |
+| Idempotency identifiers                             | **Missing / blocked**                   | No declared v0.1 public symbol                                                                                                                            | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | No substitute adapter or fake fixture                                         | Key contract, scoping, persistence, fingerprint, replay, retention, and conflicts remain unresolved                         |
+| Sync envelope                                       | **Limited**                             | `@kitamo/shared-contracts/sync`: `SyncEventNameSchema`, `SyncEventSchema`                                                                                 | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Four-name and strict envelope fixtures                                        | Operational event metadata only; not upload/pull, batch, retry, acknowledgement, conflict resolution, or authority protocol |
+| Sync result                                         | **Missing / blocked**                   | No declared v0.1 public result symbol                                                                                                                     | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | No local result schema                                                        | Production outcome/checkpoint/conflict/retry semantics remain unresolved                                                    |
+| App-version policy                                  | **Limited primitives / policy blocked** | `@kitamo/shared-contracts/versions`: app-version schemas, `PlatformSchema`, contract support utilities                                                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | App-version grammar plus contract fail-closed tests                           | No minimum/supported client policy, channel rollout, grace period, spoofing policy, or remediation behavior                 |
+| Membership references                               | **Missing / blocked**                   | No declared v0.1 public symbol                                                                                                                            | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | No local membership model                                                     | Membership authority, lifecycle, scope, revocation, and persistence remain unresolved                                       |
+| Role references                                     | **Missing / blocked**                   | No canonical role registry or reference export; `AuditEventSchema.actor_role` is only a bounded token                                                     | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Architecture tests prevent invented role schemas                              | Audit token must not be promoted into an authorization model                                                                |
+| Android `branch` to canonical `stall` compatibility | **Missing from runtime / blocked**      | No declared public package path; compatibility evidence is internal governance material                                                                   | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | No runtime adapter; canonical source scan rejects `branch_id`                 | Equivalence, source versions, migration, unknown values, and runtime mapping remain unapproved/unexported                   |
+
+### Test evidence paths
+
+- `tests/contracts/public-surface.test.ts` — exact package/version/commit,
+  runtime exports, all declared public paths, and prohibited subpaths.
+- `tests/contracts/version-context.test.ts` — exact supported version,
+  malformed/unsupported fail-closed cases, app-version primitives, and the
+  minimal contract context.
+- `tests/contracts/primitives.test.ts` — common values, opaque IDs, time,
+  money, decimals, quantities, and the bounded unit registry.
+- `tests/contracts/operational.test.ts` — business/stall references,
+  pagination, structured errors/field issues, limited sync, audit, and support
+  shapes.
+- `tests/fixtures/contracts.ts` — fictional positive and negative consumer
+  fixtures.
+- `tests/compatibility/pin-policy.test.ts` — wrong commit/version/integrity,
+  absent package entry, malformed export map, and package/runtime drift.
+- `tests/architecture/foundation.test.ts` — adapter-only imports, no deep or
+  source-relative import, no copied Zod schemas, canonical stall terminology,
+  and no server/auth/persistence/cloud dependencies.
+
+## Intentionally unavailable merchant areas
+
+The v0.1 public package intentionally exports no runtime request/response
+contracts for sales, sale items, products, inventory, ingredients, recipes,
+production, COGS, fixed costs, refunds, voids, corrections, subscriptions,
+payments, customer orders, loyalty, or memberships. Platform API creates no
+local substitute for them. Any operation depending on them remains blocked.
+
+## Historical API-0 evidence marker
+
+Everything below this marker records the dependency state observed on
+2026-07-25, when Shared Contracts was empty and API-1 was blocked. It is kept to
+preserve the evidence trail. Statements below such as “current,” “absent,” or
+“none” are historical unless explicitly labelled otherwise; the current
+authority and matrix are the sections above.
+
 Inspection date: 2026-07-25
 Inspection timezone: Asia/Manila
 Platform API repository: `/Users/rovs/Documents/KitaMo-ph/platform-api`
 Shared Contracts local source: `/Users/rovs/Documents/KitaMo-ph/shared-contracts`
 Inferred and verified public remote: `https://github.com/kitamo-ph/shared-contracts`
 
-## Outcome
+## Historical API-0 outcome
 
 **API-1 is blocked. Platform API can safely consume no Shared Contracts
 contract or export.**
@@ -37,49 +205,49 @@ commit exist.
 
 Every artifact in this report uses one of the following statuses:
 
-| Status | Meaning |
-| --- | --- |
-| **Confirmed** | Implemented, inspectable, and supported by repository evidence. |
-| **Published** | Available through an identifiable package release or approved distribution mechanism. |
-| **Approved** | Formally approved but not necessarily implemented or published. |
-| **Proposed** | Documented proposal awaiting approval. |
-| **Deferred** | Intentionally postponed. |
-| **Blocked** | Cannot proceed because of a named dependency. |
-| **Deprecated** | Still present but marked for retirement. |
-| **Missing** | Required but not found. |
-| **Unresolved** | Conflicting or insufficient evidence. |
-| **Not inspected** | Unavailable or outside the completed inspection. |
+| Status            | Meaning                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| **Confirmed**     | Implemented, inspectable, and supported by repository evidence.                       |
+| **Published**     | Available through an identifiable package release or approved distribution mechanism. |
+| **Approved**      | Formally approved but not necessarily implemented or published.                       |
+| **Proposed**      | Documented proposal awaiting approval.                                                |
+| **Deferred**      | Intentionally postponed.                                                              |
+| **Blocked**       | Cannot proceed because of a named dependency.                                         |
+| **Deprecated**    | Still present but marked for retirement.                                              |
+| **Missing**       | Required but not found.                                                               |
+| **Unresolved**    | Conflicting or insufficient evidence.                                                 |
+| **Not inspected** | Unavailable or outside the completed inspection.                                      |
 
 A roadmap entry, task instruction, future authorization, filename, prose-only
 concept, source file excluded from package exports, unbuilt package,
 unpublished package name, draft mapping, or proposed version is not evidence
 of an implemented public contract.
 
-## Exact source state
+## Historical API-0 exact source state
 
 ### Local Shared Contracts directory
 
-| Item | Evidence |
-| --- | --- |
-| Resolved path | `/Users/rovs/Documents/KitaMo-ph/shared-contracts` |
-| Git repository | No; `.git` is absent and Git repository commands return no repository state |
-| Local remote | None |
-| Current branch | None |
-| HEAD commit | None |
-| Package version | None |
-| Package name | None |
-| Public import paths | None |
-| Runtime dependencies | None |
-| Development dependencies | None |
-| Source entry points | None |
-| Public export declarations | None |
-| Schemas and mappings | None |
-| Tests and fixtures | None |
-| CI and publishing | None |
+| Item                                 | Evidence                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| Resolved path                        | `/Users/rovs/Documents/KitaMo-ph/shared-contracts`                                    |
+| Git repository                       | No; `.git` is absent and Git repository commands return no repository state           |
+| Local remote                         | None                                                                                  |
+| Current branch                       | None                                                                                  |
+| HEAD commit                          | None                                                                                  |
+| Package version                      | None                                                                                  |
+| Package name                         | None                                                                                  |
+| Public import paths                  | None                                                                                  |
+| Runtime dependencies                 | None                                                                                  |
+| Development dependencies             | None                                                                                  |
+| Source entry points                  | None                                                                                  |
+| Public export declarations           | None                                                                                  |
+| Schemas and mappings                 | None                                                                                  |
+| Tests and fixtures                   | None                                                                                  |
+| CI and publishing                    | None                                                                                  |
 | Tracked declarations or distribution | None; there is no Git repository and neither declaration nor distribution files exist |
-| Applicable instruction files | None |
-| Files present | `docs/preflight/workspace-inventory.md` only |
-| Evidence-file digest | SHA-256 `7c206768c9973a6e5036450176d1c3332970c62c62f7e6c793a9c4607830fdc4` |
+| Applicable instruction files         | None                                                                                  |
+| Files present                        | `docs/preflight/workspace-inventory.md` only                                          |
+| Evidence-file digest                 | SHA-256 `7c206768c9973a6e5036450176d1c3332970c62c62f7e6c793a9c4607830fdc4`            |
 
 The sole document records that the directory was empty and non-Git before the
 document was created. It explicitly defers Android domain and persistence
@@ -92,18 +260,18 @@ It contains no machine-readable contract definition.
 The public GitHub repository at
 `https://github.com/kitamo-ph/shared-contracts` was inspected read-only.
 
-| Item | Evidence |
-| --- | --- |
-| Repository exists | Yes |
-| Visibility | Public |
-| Repository metadata default-branch name | `main` |
-| Actual branches | None |
-| Remote HEAD | None |
-| Commits | None |
-| Tags | None |
-| Releases | None |
-| GitHub Actions workflows | None |
-| Repository size | `0` |
+| Item                                    | Evidence |
+| --------------------------------------- | -------- |
+| Repository exists                       | Yes      |
+| Visibility                              | Public   |
+| Repository metadata default-branch name | `main`   |
+| Actual branches                         | None     |
+| Remote HEAD                             | None     |
+| Commits                                 | None     |
+| Tags                                    | None     |
+| Releases                                | None     |
+| GitHub Actions workflows                | None     |
+| Repository size                         | `0`      |
 
 GitHub's `default_branch: main` metadata does not establish an actual `main`
 branch. The remote has no refs, so there is no branch or commit that Platform
@@ -125,20 +293,20 @@ The absence of local package identity, together with the empty public remote,
 is sufficient to block consumption regardless of whether an undisclosed
 private package exists.
 
-## Evidence summary
+## Historical API-0 evidence summary
 
-| Evidence category | Result |
-| --- | --- |
-| Confirmed contracts or exports | None |
-| Published contracts or exports | None |
-| Approved contracts or exports | None |
-| Proposed contract artifacts | None; tooling and naming directions are proposals, not contracts |
-| Deferred evidence | Android domain and persistence discovery |
-| Blocked work | Shared Contracts bootstrap pending its approval gate; API-1 consumption pending public exports and a pin |
-| Deprecated contracts or exports | None |
-| Missing contracts or exports | All 24 required areas |
-| Unresolved matters | Package identity, export names, contract shapes and semantics, version policy, and compatibility approval |
-| Not inspected evidence | Access-controlled GitHub Packages and the explicitly deferred Android implementation discovery |
+| Evidence category               | Result                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Confirmed contracts or exports  | None                                                                                                      |
+| Published contracts or exports  | None                                                                                                      |
+| Approved contracts or exports   | None                                                                                                      |
+| Proposed contract artifacts     | None; tooling and naming directions are proposals, not contracts                                          |
+| Deferred evidence               | Android domain and persistence discovery                                                                  |
+| Blocked work                    | Shared Contracts bootstrap pending its approval gate; API-1 consumption pending public exports and a pin  |
+| Deprecated contracts or exports | None                                                                                                      |
+| Missing contracts or exports    | All 24 required areas                                                                                     |
+| Unresolved matters              | Package identity, export names, contract shapes and semantics, version policy, and compatibility approval |
+| Not inspected evidence          | Access-controlled GitHub Packages and the explicitly deferred Android implementation discovery            |
 
 ## Required contract/export evidence record
 
@@ -179,56 +347,56 @@ An export is not public merely because a future source file exists. A future
 record must verify that the package export map exposes the import path and that
 the pinned artifact actually contains it.
 
-## Shared Contracts consumption matrix
+## Historical API-0 Shared Contracts consumption matrix
 
 Expected exports below are described by responsibility only. No symbol,
 subpath, field name, or package name is inferred.
 
-| Contract area | Required Platform API use | Expected Shared Contracts export | Actual public export | Evidence status | Version or commit | Compatibility concerns | Platform API adapter needed | Tests available | Consumer repositories affected | Blocking decision | Recommended next action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Contract version | Negotiate and fail closed on unsupported breaking contract versions | A public machine-readable contract-version definition and runtime validation surface | None | **Missing** | None / none | No version syntax, compatibility range, negotiation location, or breaking-change policy exists | Undetermined; do not create a local version contract | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`, `website` | Shared Contracts versioning approval and Platform API consumption/version-negotiation approval | Approve and publish a version contract with compatibility tests before adding version helpers |
-| Opaque identifiers | Preserve identifiers without parsing or semantic reinterpretation | A public opaque-identifier contract and runtime validation surface | None | **Missing** | None / none | Representation, normalization, length, and cross-type substitution rules are absent | Undetermined; do not introduce a canonical local identifier type | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Canonical identifier representation and validation | Discover existing evidence, approve semantics, export, and test the contract |
-| Business identifiers | Address a business consistently across server and clients | A public business-identifier contract and runtime validation surface | None | **Missing** | None / none | Relationship to external identity, membership, and stall ownership is unresolved | Undetermined; no production identity adapter | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Canonical business identity and external-to-internal mapping | Approve the identifier contract and identity boundary before use |
-| Stall identifiers | Enforce canonical stall scope without treating Android terminology as canonical | A public stall-identifier contract and runtime validation surface | None | **Missing** | None / none | Android may use `branch`; no approved mapping or identity equivalence exists | Undetermined; no `branch` conversion is permitted | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Canonical stall identity and separately approved Android compatibility mapping | Approve/export the stall identifier, then decide mapping from inspected Android evidence |
-| User identifiers | Resolve authenticated actors to canonical users | A public user-identifier contract and runtime validation surface | None | **Missing** | None / none | Identity-provider identifiers must not be assumed to equal canonical user identifiers | Undetermined; production identity mapping is out of scope | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | External-to-internal identity mapping and canonical user identity | Approve/export the identifier before authentication or authorization integration |
-| Device identifiers | Correlate offline clients and synchronization safely | A public device-identifier contract and runtime validation surface | None | **Missing** | None / none | Device lifecycle, rotation, trust, privacy, and ownership semantics are absent | Undetermined; do not generate a canonical local format | None | `platform-api`, `owner-seller-mobile`, `customer-mobile` | Device identity lifecycle and sync ownership | Approve/export a privacy-reviewed device identifier contract |
-| Timestamps | Validate canonical instants at transport and audit boundaries | A public timestamp contract with runtime validation | None | **Missing** | None / none | UTC requirements, accepted syntax, precision, offsets, and serialization are absent | Undetermined; do not declare an alternate timestamp format | None | All consumer repositories | Timestamp representation and precision | Approve/export the timestamp contract with acceptance and rejection fixtures |
-| Timezone | Preserve the business or user timezone independently from an instant | A public timezone contract with runtime validation | None | **Missing** | None / none | IANA-zone use, invalid/obsolete zones, fallback behavior, and ownership are absent | Undetermined; no canonical fallback may be invented | None | All consumer repositories | Canonical timezone representation and fallback policy | Approve/export timezone semantics and preservation tests |
-| Currency | Identify currencies without silent defaults or coercion | A public currency contract with runtime validation | None | **Missing** | None / none | Supported currencies, code standard, case, and unsupported-currency behavior are absent | Undetermined; no default currency adapter | None | All consumer repositories | Currency representation and supported-value policy | Approve/export currency semantics and rejection behavior |
-| Money | Preserve monetary values exactly across transport boundaries | A public money contract with runtime validation | None | **Missing** | None / none | Amount representation, precision, currency coupling, bounds, rounding, and arithmetic ownership are unresolved | Undetermined; do not define a local canonical money schema | None | All consumer repositories | Money representation and precision; protected merchant financial semantics remain outside Platform API | Approve/export transport semantics without moving Android profit or accounting behavior |
-| Decimal quantity | Preserve non-integer quantities without binary-floating-point loss | A public decimal-quantity contract with runtime validation | None | **Missing** | None / none | Encoding, scale, precision, sign, bounds, and arithmetic rules are absent | Undetermined; do not coerce to a locally selected number format | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Decimal representation and precision | Approve/export exact quantity representation with precision fixtures |
-| Units | Interpret quantities only with approved unit meaning | A public units contract or approved shared unit enumeration with runtime validation | None | **Missing** | None / none | Canonical values, aliases, conversions, dimension compatibility, and unknown-unit handling are absent | Undetermined; do not redeclare a local canonical enum | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Unit vocabulary and conversion ownership | Discover Android evidence, approve/export the vocabulary, and reject unknowns |
-| Pagination | Return list boundaries and continuation state consistently | A public pagination request and response contract with runtime validation | None | **Missing** | None / none | Cursor versus offset, limits, ordering stability, terminal state, and invalid-token behavior are absent | Undetermined; no production pagination envelope | None | `platform-api`, `admin`, `customer-mobile`, potentially `website` | Pagination model and compatibility policy | Approve/export one pagination contract with boundary fixtures |
-| Structured errors | Produce machine-readable failures shared by consumers | A public structured-error contract with runtime validation | None | **Missing** | None / none | Codes, HTTP relationship, retryability, localization, details, and unknown-code behavior are absent | Undetermined; internal errors must not be exposed as canonical | None | All consumer repositories | Error taxonomy, disclosure rules, and versioning | Approve/export an error contract after security and privacy review |
-| Field-level violations | Report validation failures without leaking inappropriate input | A public field-violation contract with runtime validation | None | **Missing** | None / none | Field path syntax, multiple violations, codes, messages, ordering, and redaction are absent | Undetermined; no local canonical violation shape | None | `platform-api`, `admin`, `customer-mobile`, `website` | Violation path/code and privacy rules | Approve/export the violation contract with redaction and malformed-input tests |
-| Audit envelope | Emit approved audit context around trusted operations | A public audit-envelope contract with runtime validation | None | **Missing** | None / none | Actor, subject, action, time, correlation, version, retention, and redaction semantics are absent | Undetermined; no production audit producer or persistence | None | `platform-api`, `admin`, `owner-seller-mobile` | Audit event model, persistence, retention, and privacy | Approve/export the envelope before designing audit persistence |
-| Correlation identifiers | Trace one operation across boundaries without exposing secrets | A public correlation-identifier contract with runtime validation | None | **Missing** | None / none | Generation authority, propagation, cardinality, logging, trust, and disclosure are absent | Undetermined; internal tracing must not be called canonical | None | All consumer repositories | Correlation propagation and logging policy | Approve/export an identifier contract and observability handling rules |
-| Idempotency identifiers | Detect replay of approved mutations safely | A public idempotency-identifier contract with runtime validation | None | **Missing** | None / none | Scope, generation, uniqueness, retention, reuse, hashing, and conflict behavior are absent | Undetermined; persistent idempotency is out of scope | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Idempotency key contract and persistent idempotency policy | Approve/export the identifier only alongside operation and retention decisions |
-| Sync envelope | Validate synchronization requests and provenance | A public synchronization-envelope contract with runtime validation | None | **Missing** | None / none | Authority, entity/version semantics, ordering, causality, retry, deletion, conflict, and offline behavior are absent | Undetermined; no sync adapter or mutation | None | `platform-api`, `owner-seller-mobile`, `customer-mobile`, `admin` | Sync ownership and compatibility model | Complete approved Android discovery and cross-repository sync decisions before export |
-| Sync result | Return explicit synchronization outcomes and conflicts | A public synchronization-result contract with runtime validation | None | **Missing** | None / none | Success/partial/conflict/retry outcomes, per-item results, error coupling, and checkpoint behavior are absent | Undetermined; no local canonical result | None | `platform-api`, `owner-seller-mobile`, `customer-mobile`, `admin` | Sync result semantics and conflict ownership | Approve/export together with the sync envelope and end-to-end fixtures |
-| App-version policy | Accept, warn, or reject client versions consistently | A public app-version policy contract with runtime validation | None | **Missing** | None / none | Version syntax, platform/channel scope, minimum/supported ranges, grace periods, and failure behavior are absent | Undetermined; fail closed where a required policy cannot be evaluated | None | All consumer repositories | App-version authority and unsupported-version behavior | Approve/export the policy and platform-specific conformance cases |
-| Membership references | Associate a user with approved business/stall scope | A public membership-reference contract with runtime validation | None | **Missing** | None / none | Membership identity, subject, scope, lifecycle, status, and external-provider relationship are absent | Undetermined; no production membership model | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Membership model and identity resolution | Approve/export only after identity and authorization boundaries are decided |
-| Role references | Carry an approved role reference without embedding local policy | A public role-reference contract or approved shared role enumeration with runtime validation | None | **Missing** | None / none | Vocabulary, scope, assignment, inheritance, evolution, and relationship to authorization policy are absent | Undetermined; do not redeclare a canonical enum | None | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile` | Role representation and authorization-policy ownership | Approve/export role references separately from server authorization implementation |
-| Android `branch` to canonical `stall` compatibility mapping | Translate legacy Android evidence explicitly and reject unsupported values | A public approved compatibility mapping with source/target version evidence | None | **Missing** | None / none | The only evidence is proposed canonical naming; equivalence, field mapping, versions, unknown values, and migration behavior are unapproved | No adapter is permitted until the mapping is approved and exported | None | `platform-api`, `owner-seller-mobile`, `admin`; downstream customer behavior may be affected | Cross-repository mapping approval based on inspected Android implementation | Complete deferred Android discovery, record the decision, export/test the mapping, then add an internal explicit adapter |
+| Contract area                                               | Required Platform API use                                                       | Expected Shared Contracts export                                                             | Actual public export | Evidence status | Version or commit | Compatibility concerns                                                                                                                      | Platform API adapter needed                                           | Tests available | Consumer repositories affected                                                               | Blocking decision                                                                                      | Recommended next action                                                                                                  |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------- | --------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Contract version                                            | Negotiate and fail closed on unsupported breaking contract versions             | A public machine-readable contract-version definition and runtime validation surface         | None                 | **Missing**     | None / none       | No version syntax, compatibility range, negotiation location, or breaking-change policy exists                                              | Undetermined; do not create a local version contract                  | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`, `website`                 | Shared Contracts versioning approval and Platform API consumption/version-negotiation approval         | Approve and publish a version contract with compatibility tests before adding version helpers                            |
+| Opaque identifiers                                          | Preserve identifiers without parsing or semantic reinterpretation               | A public opaque-identifier contract and runtime validation surface                           | None                 | **Missing**     | None / none       | Representation, normalization, length, and cross-type substitution rules are absent                                                         | Undetermined; do not introduce a canonical local identifier type      | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Canonical identifier representation and validation                                                     | Discover existing evidence, approve semantics, export, and test the contract                                             |
+| Business identifiers                                        | Address a business consistently across server and clients                       | A public business-identifier contract and runtime validation surface                         | None                 | **Missing**     | None / none       | Relationship to external identity, membership, and stall ownership is unresolved                                                            | Undetermined; no production identity adapter                          | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Canonical business identity and external-to-internal mapping                                           | Approve the identifier contract and identity boundary before use                                                         |
+| Stall identifiers                                           | Enforce canonical stall scope without treating Android terminology as canonical | A public stall-identifier contract and runtime validation surface                            | None                 | **Missing**     | None / none       | Android may use `branch`; no approved mapping or identity equivalence exists                                                                | Undetermined; no `branch` conversion is permitted                     | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Canonical stall identity and separately approved Android compatibility mapping                         | Approve/export the stall identifier, then decide mapping from inspected Android evidence                                 |
+| User identifiers                                            | Resolve authenticated actors to canonical users                                 | A public user-identifier contract and runtime validation surface                             | None                 | **Missing**     | None / none       | Identity-provider identifiers must not be assumed to equal canonical user identifiers                                                       | Undetermined; production identity mapping is out of scope             | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | External-to-internal identity mapping and canonical user identity                                      | Approve/export the identifier before authentication or authorization integration                                         |
+| Device identifiers                                          | Correlate offline clients and synchronization safely                            | A public device-identifier contract and runtime validation surface                           | None                 | **Missing**     | None / none       | Device lifecycle, rotation, trust, privacy, and ownership semantics are absent                                                              | Undetermined; do not generate a canonical local format                | None            | `platform-api`, `owner-seller-mobile`, `customer-mobile`                                     | Device identity lifecycle and sync ownership                                                           | Approve/export a privacy-reviewed device identifier contract                                                             |
+| Timestamps                                                  | Validate canonical instants at transport and audit boundaries                   | A public timestamp contract with runtime validation                                          | None                 | **Missing**     | None / none       | UTC requirements, accepted syntax, precision, offsets, and serialization are absent                                                         | Undetermined; do not declare an alternate timestamp format            | None            | All consumer repositories                                                                    | Timestamp representation and precision                                                                 | Approve/export the timestamp contract with acceptance and rejection fixtures                                             |
+| Timezone                                                    | Preserve the business or user timezone independently from an instant            | A public timezone contract with runtime validation                                           | None                 | **Missing**     | None / none       | IANA-zone use, invalid/obsolete zones, fallback behavior, and ownership are absent                                                          | Undetermined; no canonical fallback may be invented                   | None            | All consumer repositories                                                                    | Canonical timezone representation and fallback policy                                                  | Approve/export timezone semantics and preservation tests                                                                 |
+| Currency                                                    | Identify currencies without silent defaults or coercion                         | A public currency contract with runtime validation                                           | None                 | **Missing**     | None / none       | Supported currencies, code standard, case, and unsupported-currency behavior are absent                                                     | Undetermined; no default currency adapter                             | None            | All consumer repositories                                                                    | Currency representation and supported-value policy                                                     | Approve/export currency semantics and rejection behavior                                                                 |
+| Money                                                       | Preserve monetary values exactly across transport boundaries                    | A public money contract with runtime validation                                              | None                 | **Missing**     | None / none       | Amount representation, precision, currency coupling, bounds, rounding, and arithmetic ownership are unresolved                              | Undetermined; do not define a local canonical money schema            | None            | All consumer repositories                                                                    | Money representation and precision; protected merchant financial semantics remain outside Platform API | Approve/export transport semantics without moving Android profit or accounting behavior                                  |
+| Decimal quantity                                            | Preserve non-integer quantities without binary-floating-point loss              | A public decimal-quantity contract with runtime validation                                   | None                 | **Missing**     | None / none       | Encoding, scale, precision, sign, bounds, and arithmetic rules are absent                                                                   | Undetermined; do not coerce to a locally selected number format       | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Decimal representation and precision                                                                   | Approve/export exact quantity representation with precision fixtures                                                     |
+| Units                                                       | Interpret quantities only with approved unit meaning                            | A public units contract or approved shared unit enumeration with runtime validation          | None                 | **Missing**     | None / none       | Canonical values, aliases, conversions, dimension compatibility, and unknown-unit handling are absent                                       | Undetermined; do not redeclare a local canonical enum                 | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Unit vocabulary and conversion ownership                                                               | Discover Android evidence, approve/export the vocabulary, and reject unknowns                                            |
+| Pagination                                                  | Return list boundaries and continuation state consistently                      | A public pagination request and response contract with runtime validation                    | None                 | **Missing**     | None / none       | Cursor versus offset, limits, ordering stability, terminal state, and invalid-token behavior are absent                                     | Undetermined; no production pagination envelope                       | None            | `platform-api`, `admin`, `customer-mobile`, potentially `website`                            | Pagination model and compatibility policy                                                              | Approve/export one pagination contract with boundary fixtures                                                            |
+| Structured errors                                           | Produce machine-readable failures shared by consumers                           | A public structured-error contract with runtime validation                                   | None                 | **Missing**     | None / none       | Codes, HTTP relationship, retryability, localization, details, and unknown-code behavior are absent                                         | Undetermined; internal errors must not be exposed as canonical        | None            | All consumer repositories                                                                    | Error taxonomy, disclosure rules, and versioning                                                       | Approve/export an error contract after security and privacy review                                                       |
+| Field-level violations                                      | Report validation failures without leaking inappropriate input                  | A public field-violation contract with runtime validation                                    | None                 | **Missing**     | None / none       | Field path syntax, multiple violations, codes, messages, ordering, and redaction are absent                                                 | Undetermined; no local canonical violation shape                      | None            | `platform-api`, `admin`, `customer-mobile`, `website`                                        | Violation path/code and privacy rules                                                                  | Approve/export the violation contract with redaction and malformed-input tests                                           |
+| Audit envelope                                              | Emit approved audit context around trusted operations                           | A public audit-envelope contract with runtime validation                                     | None                 | **Missing**     | None / none       | Actor, subject, action, time, correlation, version, retention, and redaction semantics are absent                                           | Undetermined; no production audit producer or persistence             | None            | `platform-api`, `admin`, `owner-seller-mobile`                                               | Audit event model, persistence, retention, and privacy                                                 | Approve/export the envelope before designing audit persistence                                                           |
+| Correlation identifiers                                     | Trace one operation across boundaries without exposing secrets                  | A public correlation-identifier contract with runtime validation                             | None                 | **Missing**     | None / none       | Generation authority, propagation, cardinality, logging, trust, and disclosure are absent                                                   | Undetermined; internal tracing must not be called canonical           | None            | All consumer repositories                                                                    | Correlation propagation and logging policy                                                             | Approve/export an identifier contract and observability handling rules                                                   |
+| Idempotency identifiers                                     | Detect replay of approved mutations safely                                      | A public idempotency-identifier contract with runtime validation                             | None                 | **Missing**     | None / none       | Scope, generation, uniqueness, retention, reuse, hashing, and conflict behavior are absent                                                  | Undetermined; persistent idempotency is out of scope                  | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Idempotency key contract and persistent idempotency policy                                             | Approve/export the identifier only alongside operation and retention decisions                                           |
+| Sync envelope                                               | Validate synchronization requests and provenance                                | A public synchronization-envelope contract with runtime validation                           | None                 | **Missing**     | None / none       | Authority, entity/version semantics, ordering, causality, retry, deletion, conflict, and offline behavior are absent                        | Undetermined; no sync adapter or mutation                             | None            | `platform-api`, `owner-seller-mobile`, `customer-mobile`, `admin`                            | Sync ownership and compatibility model                                                                 | Complete approved Android discovery and cross-repository sync decisions before export                                    |
+| Sync result                                                 | Return explicit synchronization outcomes and conflicts                          | A public synchronization-result contract with runtime validation                             | None                 | **Missing**     | None / none       | Success/partial/conflict/retry outcomes, per-item results, error coupling, and checkpoint behavior are absent                               | Undetermined; no local canonical result                               | None            | `platform-api`, `owner-seller-mobile`, `customer-mobile`, `admin`                            | Sync result semantics and conflict ownership                                                           | Approve/export together with the sync envelope and end-to-end fixtures                                                   |
+| App-version policy                                          | Accept, warn, or reject client versions consistently                            | A public app-version policy contract with runtime validation                                 | None                 | **Missing**     | None / none       | Version syntax, platform/channel scope, minimum/supported ranges, grace periods, and failure behavior are absent                            | Undetermined; fail closed where a required policy cannot be evaluated | None            | All consumer repositories                                                                    | App-version authority and unsupported-version behavior                                                 | Approve/export the policy and platform-specific conformance cases                                                        |
+| Membership references                                       | Associate a user with approved business/stall scope                             | A public membership-reference contract with runtime validation                               | None                 | **Missing**     | None / none       | Membership identity, subject, scope, lifecycle, status, and external-provider relationship are absent                                       | Undetermined; no production membership model                          | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Membership model and identity resolution                                                               | Approve/export only after identity and authorization boundaries are decided                                              |
+| Role references                                             | Carry an approved role reference without embedding local policy                 | A public role-reference contract or approved shared role enumeration with runtime validation | None                 | **Missing**     | None / none       | Vocabulary, scope, assignment, inheritance, evolution, and relationship to authorization policy are absent                                  | Undetermined; do not redeclare a canonical enum                       | None            | `platform-api`, `owner-seller-mobile`, `admin`, `customer-mobile`                            | Role representation and authorization-policy ownership                                                 | Approve/export role references separately from server authorization implementation                                       |
+| Android `branch` to canonical `stall` compatibility mapping | Translate legacy Android evidence explicitly and reject unsupported values      | A public approved compatibility mapping with source/target version evidence                  | None                 | **Missing**     | None / none       | The only evidence is proposed canonical naming; equivalence, field mapping, versions, unknown values, and migration behavior are unapproved | No adapter is permitted until the mapping is approved and exported    | None            | `platform-api`, `owner-seller-mobile`, `admin`; downstream customer behavior may be affected | Cross-repository mapping approval based on inspected Android implementation                            | Complete deferred Android discovery, record the decision, export/test the mapping, then add an internal explicit adapter |
 
-## Package-consumption mechanism evaluation
+## Historical API-0 package-consumption mechanism evaluation
 
 No package-consumption mechanism is selected.
 
-| Permitted mechanism | Evidence status | Current evidence | Safety result |
-| --- | --- | --- | --- |
-| Published package dependency | **Blocked** | No declared package identity, version, exports, tag, or release; conventional npm name is absent | Cannot pin or import an identifiable artifact |
-| npm workspace dependency | **Blocked** | No root workspace configuration and no Shared Contracts `package.json` | There is no workspace package to resolve |
-| Local `file:` dependency | **Blocked** | The local directory is not a package and contains no source or exports | A `file:` entry would create a fragile non-package dependency |
-| Git commit dependency | **Blocked** | The public remote is empty and has no commit or ref | There is no immutable commit to pin |
-| TypeScript project reference | **Blocked** | No Shared Contracts `tsconfig`, source tree, declarations, or build graph exists | There is no TypeScript project to reference |
+| Permitted mechanism          | Evidence status | Current evidence                                                                                 | Safety result                                                 |
+| ---------------------------- | --------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Published package dependency | **Blocked**     | No declared package identity, version, exports, tag, or release; conventional npm name is absent | Cannot pin or import an identifiable artifact                 |
+| npm workspace dependency     | **Blocked**     | No root workspace configuration and no Shared Contracts `package.json`                           | There is no workspace package to resolve                      |
+| Local `file:` dependency     | **Blocked**     | The local directory is not a package and contains no source or exports                           | A `file:` entry would create a fragile non-package dependency |
+| Git commit dependency        | **Blocked**     | The public remote is empty and has no commit or ref                                              | There is no immutable commit to pin                           |
+| TypeScript project reference | **Blocked**     | No Shared Contracts `tsconfig`, source tree, declarations, or build graph exists                 | There is no TypeScript project to reference                   |
 
 A package-consumption decision remains unresolved until Shared Contracts has an
 approved package identity and public export surface. Platform API must not
 modify Shared Contracts to make consumption possible and must not use a deep
 import or an unbuilt filesystem path merely to make compilation succeed.
 
-## Missing-contract dependency report
+## Historical API-0 missing-contract dependency report
 
 The entries below are intentionally separate. Similar-looking concepts have
 different semantics, authority, security, privacy, persistence, migration, or
@@ -929,7 +1097,7 @@ offline impacts and are therefore not grouped.
   authority, Platform API, Admin, security/privacy, and other affected consumer
   owners; exact approvers unresolved.
 
-## API-1 stop gate
+## Historical API-0 API-1 stop gate
 
 The following brief stop conditions are present:
 
@@ -967,40 +1135,40 @@ semantic and cross-repository decisions, especially version negotiation,
 money/quantity precision, identity/membership/role authority, synchronization
 ownership, and Android compatibility.
 
-## Blocked contract coverage
+## Historical API-0 blocked contract coverage
 
 No conformance test should be written for a contract that does not exist.
 
-| Intended coverage | Status | Blocking evidence |
-| --- | --- | --- |
-| Package public import paths | **Blocked** | No package or export map |
-| Absence of deep-import dependency | **Blocked** | No supported public import exists to test |
-| Accepted contract versions | **Blocked** | Contract-version syntax/policy is missing |
-| Unsupported-version rejection | **Blocked** | Compatibility and rejection policy is missing |
-| Malformed-version rejection | **Blocked** | Version validator is missing |
-| Runtime request schema acceptance/rejection | **Blocked** | No request schema exports exist |
-| Runtime response schema acceptance/rejection | **Blocked** | No response schema exports exist |
-| Opaque identifier preservation | **Blocked** | Identifier contract is missing |
-| Business/stall/user/device identifier conformance | **Blocked** | All four identifier contracts are missing |
-| UTC timestamp handling | **Blocked** | Timestamp contract is missing |
-| Timezone preservation | **Blocked** | Timezone contract is missing |
-| Currency preservation | **Blocked** | Currency contract is missing |
-| Exact money/minor-unit preservation | **Blocked** | Money representation and precision are unresolved |
-| Decimal quantity precision | **Blocked** | Quantity representation and precision are unresolved |
-| Unit validation | **Blocked** | Unit vocabulary/contract is missing |
-| Pagination envelope conformance | **Blocked** | Pagination contract is missing |
-| Structured-error conformance | **Blocked** | Error contract is missing |
-| Field-level violation conformance | **Blocked** | Violation contract is missing |
-| Audit-envelope conformance | **Blocked** | Audit contract is missing |
-| Correlation identifier conformance | **Blocked** | Correlation contract is missing |
-| Idempotency identifier conformance | **Blocked** | Idempotency contract is missing |
-| Sync-envelope conformance | **Blocked** | Sync envelope and ownership are missing |
-| Sync-result conformance | **Blocked** | Sync result and outcome semantics are missing |
-| App-version policy conformance | **Blocked** | App-version policy is missing |
-| Membership and role reference conformance | **Blocked** | Both contracts and authority decisions are missing |
-| Android `branch` to canonical `stall` mapping | **Blocked** | Mapping is missing and unapproved |
+| Intended coverage                                 | Status      | Blocking evidence                                    |
+| ------------------------------------------------- | ----------- | ---------------------------------------------------- |
+| Package public import paths                       | **Blocked** | No package or export map                             |
+| Absence of deep-import dependency                 | **Blocked** | No supported public import exists to test            |
+| Accepted contract versions                        | **Blocked** | Contract-version syntax/policy is missing            |
+| Unsupported-version rejection                     | **Blocked** | Compatibility and rejection policy is missing        |
+| Malformed-version rejection                       | **Blocked** | Version validator is missing                         |
+| Runtime request schema acceptance/rejection       | **Blocked** | No request schema exports exist                      |
+| Runtime response schema acceptance/rejection      | **Blocked** | No response schema exports exist                     |
+| Opaque identifier preservation                    | **Blocked** | Identifier contract is missing                       |
+| Business/stall/user/device identifier conformance | **Blocked** | All four identifier contracts are missing            |
+| UTC timestamp handling                            | **Blocked** | Timestamp contract is missing                        |
+| Timezone preservation                             | **Blocked** | Timezone contract is missing                         |
+| Currency preservation                             | **Blocked** | Currency contract is missing                         |
+| Exact money/minor-unit preservation               | **Blocked** | Money representation and precision are unresolved    |
+| Decimal quantity precision                        | **Blocked** | Quantity representation and precision are unresolved |
+| Unit validation                                   | **Blocked** | Unit vocabulary/contract is missing                  |
+| Pagination envelope conformance                   | **Blocked** | Pagination contract is missing                       |
+| Structured-error conformance                      | **Blocked** | Error contract is missing                            |
+| Field-level violation conformance                 | **Blocked** | Violation contract is missing                        |
+| Audit-envelope conformance                        | **Blocked** | Audit contract is missing                            |
+| Correlation identifier conformance                | **Blocked** | Correlation contract is missing                      |
+| Idempotency identifier conformance                | **Blocked** | Idempotency contract is missing                      |
+| Sync-envelope conformance                         | **Blocked** | Sync envelope and ownership are missing              |
+| Sync-result conformance                           | **Blocked** | Sync result and outcome semantics are missing        |
+| App-version policy conformance                    | **Blocked** | App-version policy is missing                        |
+| Membership and role reference conformance         | **Blocked** | Both contracts and authority decisions are missing   |
+| Android `branch` to canonical `stall` mapping     | **Blocked** | Mapping is missing and unapproved                    |
 
-## Recommended next action
+## Historical API-0 recommended next action
 
 Keep Platform API at the documentation-only verification gate. Coordinate with
 the Shared Contracts authority to complete its approved bootstrap and deferred

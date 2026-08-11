@@ -2,20 +2,22 @@
 
 ## Document status
 
-| Item | Status |
-| --- | --- |
-| Architecture | Proposed |
-| Framework selection | Proposed; approval required |
-| API-0 evidence foundation | Confirmed; review pending |
-| Git repository bootstrap | Blocked pending an approved initialization/reconciliation action |
-| API-1 Shared Contracts consumption | Blocked |
-| Production implementation | Not authorized |
+| Item                                 | Status                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| API-1 contract-consumer architecture | Implemented; verification and CI gates required for acceptance                        |
+| Framework selection                  | Proposed; approval required                                                           |
+| API-0 evidence foundation            | Complete at `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                                |
+| Git repository bootstrap             | Complete on `main`                                                                    |
+| API-1 Shared Contracts consumption   | `@kitamo/shared-contracts@0.1.0` pinned to `a380f19f2adcf0557b424461f869aa3d0069e176` |
+| HTTP server and routes               | Absent; API-1 remains transport-neutral                                               |
+| Production implementation            | Not authorized                                                                        |
 
-This document records the smallest safe architecture proposal supported by the
-evidence available on 2026-07-25. It is not an approved implementation
-decision.
+This document preserves the API-0 server proposal and records the implemented
+API-1 contract-consumer boundary. Only the bounded API-1 decisions recorded in
+`decision-log/decisions/` are approved. The future server architecture and
+framework remain proposals.
 
-## Confirmed evidence baseline
+## Historical API-0 evidence baseline (2026-07-25)
 
 - The resolved local path is
   `/Users/rovs/Documents/KitaMo-ph/platform-api`.
@@ -27,10 +29,46 @@ decision.
 - No existing runtime, framework, package manager, dependency set, application
   code, tests, CI, deployment configuration, persistence configuration, or
   production integration was found in Platform API.
-- Shared Contracts has no verified public package export that Platform API can
-  consume. API-1 is therefore blocked.
+- Shared Contracts had no verified public package export that Platform API
+  could consume. API-1 was therefore correctly blocked at that time.
 
-Proposals below must not be mistaken for repository evidence or approval.
+That baseline is historical. Shared Contracts later completed SC-0 through
+SC-4 and froze `@kitamo/shared-contracts@0.1.0` at commit
+`a380f19f2adcf0557b424461f869aa3d0069e176`, unblocking bounded API-1
+consumption but no production operation.
+
+## Current API-1 architecture
+
+API-1 establishes this dependency direction:
+
+```text
+Platform API consumers
+    -> src/contracts
+        -> @kitamo/shared-contracts declared public exports
+```
+
+The boundary records the approved repository, commit, package name, and
+version; re-exports only reviewed public schemas and types; enforces support for
+contract version `0.1.0` only; and parses a minimal contract context containing
+only `contract_version` and `correlation_id`.
+
+Structural validation is not identity resolution or authorization. No
+identifier in the contract context is treated as an authenticated principal,
+membership, role, ownership fact, or authorized scope.
+
+Shared Contracts is acquired through the exact GitHub source archive named in
+`config/shared-contracts-pin.json`, `package.json`, and `package-lock.json`.
+The installed package copy is built with the consumer's pinned compiler, then
+its lock integrity, name, version, export keys, runtime metadata, public import
+paths, and prohibited subpaths are checked. An arbitrary sibling checkout is
+never the runtime dependency.
+
+A direct Git dependency was rejected because the current producer lifecycle
+does not prepare a usable built export surface for that install path and API-1
+may not alter the producer. A locally regenerated `npm pack` artifact was
+rejected as the authority pin because its bytes differed across the tested
+platforms. The reviewed source archive plus local build avoids both failure
+modes while retaining normal Node resolution and fail-closed integrity checks.
 
 ## Authority boundaries
 
@@ -116,9 +154,9 @@ claim as approval.
   serverless/edge compatibility cannot be assumed before target selection.
 - **Maintenance burden:** Moderate and lower than assembling lifecycle,
   validation, logging, and test conventions from primitives.
-- **Shared Contracts compatibility:** Expected to be suitable for Zod-backed or
-  adapter-backed runtime validation, but unverified because no Shared
-  Contracts package exists.
+- **Shared Contracts compatibility:** The transport-neutral API-1 adapter proves
+  public Zod-backed runtime validation; Fastify integration remains untested and
+  unapproved.
 - **Recommendation:** Preferred candidate for the smallest modular service.
 - **Approval status:** Proposed.
 
@@ -143,8 +181,8 @@ claim as approval.
   selecting an edge/runtime model that has not been approved.
 - **Maintenance burden:** Low to moderate; more operational conventions may
   need local definition than with Fastify.
-- **Shared Contracts compatibility:** Plausible but unverified; there is no
-  package or public runtime export to test.
+- **Shared Contracts compatibility:** The package runtime surface is verified
+  independently of Hono; framework integration remains untested and unapproved.
 - **Recommendation:** Alternative if an edge-style or web-standard runtime is
   later approved.
 - **Approval status:** Not approved.
@@ -170,8 +208,9 @@ claim as approval.
 - **Deployment compatibility:** Broad support on conventional Node platforms.
 - **Maintenance burden:** Moderate to high because validation, error,
   lifecycle, observability, and shutdown patterns need more assembly.
-- **Shared Contracts compatibility:** Possible through explicit adapters, but
-  unverified while exports are absent.
+- **Shared Contracts compatibility:** The package runtime surface is verified
+  independently of Express; framework integration remains untested and
+  unapproved.
 - **Recommendation:** Viable fallback, not the preferred foundation.
 - **Approval status:** Not approved.
 
@@ -182,22 +221,22 @@ decision.
 
 ## Proposed stack
 
-| Concern | Proposal | Current status |
-| --- | --- | --- |
-| Runtime | Node `>=20.19.4`, with Node `20.20.0` proposed for CI; revalidate support before approval | Proposed; local inspection used Node `20.20.2` |
-| Language | TypeScript 5.9 with strict checking | Proposed |
-| HTTP framework | Fastify | Proposed |
-| Package manager | npm with a committed lockfile | Proposed from the inherited direction and neighboring-repository evidence; no local package exists |
-| Runtime validation | Zod 4, but only through verified public Shared Contracts runtime exports | Proposed tool; contract use blocked |
-| Linting | ESLint 9 flat configuration | Proposed |
-| Formatting | Prettier 3 | Proposed |
-| Shared Contracts | Consume only a versioned, verified public export | Blocked; no suitable public export verified |
-| Validation | Validate requests and responses with the approved Shared Contracts runtime boundary | Blocked with Shared Contracts |
-| Testing | Vitest for unit and contract-consumer tests | Proposed |
-| Logging | Structured server logs with explicit redaction and correlation support | Proposed |
-| OpenAPI | Derive from approved operation records and approved public contracts | Proposed; no operations approved |
-| Persistence | Access only through application ports | Technology unresolved |
-| Deployment | No target selected | Deferred pending approval |
+| Concern            | Proposal                                                                     | Current status                                                                  |
+| ------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Runtime            | Node `>=20.19.4`, with Node `20.20.0` in CI                                  | Approved for the API-1 tooling foundation; production runtime target unresolved |
+| Language           | TypeScript 5.9 with strict checking                                          | Approved for API-1                                                              |
+| HTTP framework     | Fastify                                                                      | Proposed                                                                        |
+| Package manager    | npm with a committed lockfile                                                | Approved for API-1                                                              |
+| Runtime validation | Shared Contracts' exported Zod runtime schemas                               | Implemented at the contract adapter; no local canonical schemas                 |
+| Linting            | ESLint 9 flat configuration                                                  | Implemented for API-1                                                           |
+| Formatting         | Prettier 3                                                                   | Implemented for API-1                                                           |
+| Shared Contracts   | Exact source archive for `@kitamo/shared-contracts@0.1.0` at accepted commit | Implemented and pinned; no unpinned branch or `latest`                          |
+| Validation         | Narrow parsing and fail-closed version enforcement at the contract boundary  | Implemented for API-1 primitives; no request/response operation schemas         |
+| Testing            | Vitest contract-consumer, compatibility, fixture, and architecture tests     | Implemented for API-1                                                           |
+| Logging            | Structured server logs with explicit redaction and correlation support       | Proposed                                                                        |
+| OpenAPI            | Derive from approved operation records and approved public contracts         | Proposed; no operations approved                                                |
+| Persistence        | Access only through application ports                                        | Technology unresolved                                                           |
+| Deployment         | No target selected                                                           | Deferred pending approval                                                       |
 
 This table is an evaluation baseline. It authorizes no installation, package
 publication, endpoint, database, deployment, or integration.
@@ -244,14 +283,14 @@ into context or logs.
 
 ### Contract adapters
 
-A narrow adapter boundary should be the only place where Platform API imports
-Shared Contracts. It should:
+A narrow adapter boundary under `src/contracts/` is the only place where
+Platform API imports Shared Contracts. It:
 
 - use documented public import paths only;
 - pin and report the consumed package version or approved distribution commit;
 - expose no contract that is absent from the public export;
 - preserve approved structured errors and field-level violations;
-- isolate approved compatibility mappings; and
+- exposes no Android compatibility mapping because none is public; and
 - test runtime and type-level consumer suitability.
 
 The Android `branch` to canonical `stall` mapping must remain blocked until a
@@ -329,11 +368,11 @@ observability, and test doubles. No production integration is authorized.
 
 ### Audit
 
-Audit production depends on a verified Shared Contracts audit envelope and
-approved decisions for event classification, persistence, retention, access,
-privacy, and failure behavior. Operational logs are not a substitute for an
-audit record. Audit payloads must not be improvised while the contract is
-missing.
+The limited `AuditEventSchema` is consumable for contract conformance. Audit
+production still depends on approved decisions for authoritative actor/role
+resolution, event classification, persistence, retention, access, privacy, and
+failure behavior. Operational logs are not a substitute for an audit record,
+and API-1 emits no production audit event.
 
 ### Observability
 
@@ -348,14 +387,15 @@ that dependencies, contracts, or production readiness have been verified.
 
 ### Errors
 
-Public errors must use the verified Shared Contracts structured-error and
-field-violation exports. Internal errors should be classified and mapped at
+Public errors for a future approved operation must use the verified Shared
+Contracts `StructuredErrorSchema` and `FieldIssueSchema`. Internal errors
+should be classified and mapped at
 the transport boundary without leaking stack traces, infrastructure details,
 or sensitive values.
 
-Because the required public exports are not available, Platform API must not
-invent a production error envelope. Fail-closed internal startup errors may be
-plain operational failures until the contract boundary is approved.
+API-1 verifies those shared schemas but defines no competing envelope and no
+HTTP status mapping. Fail-closed package/bootstrap errors remain internal
+operational failures.
 
 ### OpenAPI
 
@@ -382,8 +422,9 @@ The proposed test layers are:
 - compatibility tests backed by approved Shared Contracts fixtures.
 
 Tests may demonstrate implementation behavior, but they cannot supply missing
-product semantics or approval. Contract-dependent tests remain blocked until
-the public exports and fixtures are verified.
+product semantics or approval. API-1 tests cover the accepted public primitive
+surface; merchant-domain and production-operation tests remain blocked because
+their contracts and operation records do not exist.
 
 ### Configuration
 
@@ -437,24 +478,24 @@ This foundation does not authorize:
 - production idempotency, synchronization, audit, or persistence;
 - database selection, schemas, migrations, or transaction behavior;
 - external service integrations;
-- deployment, publishing, pushing, or production migrations;
+- deployment, npm publication, or production migrations;
 - real credentials or production data; or
 - promises to Admin, Customer Mobile, Website, or other consumers.
 
 ## Verification gates
 
-Before implementation may progress beyond documentation:
+API-1 acceptance requires:
 
-1. API-0 evidence and repository bootstrap must be reviewed.
-2. Runtime, framework, and package-manager decisions must be approved.
-3. Shared Contracts must provide an inspectable, versioned public export with
-   the required runtime contracts, tests, fixtures, and compatibility mapping.
-4. Platform API must verify the public import path without deep imports or
-   copied schemas.
-5. Each proposed operation must have a complete record in
-   `docs/endpoint-governance.md` and explicit approval.
-6. Security, privacy, persistence, audit, versioning, and compatibility
-   blockers for that operation must be closed.
+1. exact source archive, commit, package version, export map, and lock integrity
+   verification;
+2. reproducible `npm ci` plus `npm run verify` in a clean environment;
+3. public-import, declaration, positive/negative fixture, unsupported-version,
+   deep-import, architecture, secret, and dependency-audit checks;
+4. no copied schema, server, route, framework, persistence, authentication,
+   cloud, production sync, or deployment artifact; and
+5. unchanged Shared Contracts, Android, and Admin repositories.
 
-Until those gates are met, API-1 remains blocked and the architecture remains a
-proposal only.
+After API-1, each future operation still requires a complete record in
+`docs/endpoint-governance.md`, explicit approval, and closure of its security,
+privacy, persistence, audit, transport, reliability, and compatibility
+blockers. The proposed server architecture is not approved by API-1.
