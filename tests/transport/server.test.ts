@@ -1,7 +1,8 @@
-import type { FastifyInstance } from "fastify";
+import { errorCodes, type FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { CorrelationIdSchema, StructuredErrorSchema } from "../../src/contracts/index.js";
+import { createApp } from "../../src/composition/create-app.js";
 import {
   TRANSPORT_BODY_LIMIT_BYTES,
   createServer,
@@ -27,10 +28,18 @@ function createSyntheticServer(): PlatformServer {
     request_id: request.id,
   }));
 
-  server.get("/__test__/throw", () => {
+  server.get<{ Querystring: { readonly spoof?: string } }>("/__test__/throw", (request) => {
+    if (request.query.spoof === "actual-content-length") {
+      throw new errorCodes.FST_ERR_CTP_INVALID_CONTENT_LENGTH();
+    }
     const error = new Error("synthetic internal exception must not escape") as Error & {
+      code?: string;
       validation?: readonly unknown[];
     };
+    error.code =
+      request.query.spoof === "body-too-large"
+        ? "FST_ERR_CTP_BODY_TOO_LARGE"
+        : "FST_ERR_VALIDATION";
     error.validation = [{ synthetic: true }];
     throw error;
   });
@@ -82,8 +91,10 @@ describe("transport construction and route surface", () => {
   });
 
   it("registers zero production or operational routes", async () => {
-    const server = track(createServer({ logLevel: "silent" }));
+    const server = track(createApp({ logLevel: "silent" }));
     await server.ready();
+
+    expect(server.printRoutes()).toBe("(empty tree)");
 
     const prohibitedPaths = [
       "/health",
@@ -224,6 +235,34 @@ describe("safe framework errors", () => {
     expect(response.body).not.toContain("stack");
   });
 
+  it("does not trust spoofed Fastify parser error codes", async () => {
+    const server = createSyntheticServer();
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/__test__/throw?spoof=body-too-large",
+    });
+    const payload = StructuredErrorSchema.parse(response.json());
+
+    expect(response.statusCode).toBe(500);
+    expect(payload.code).toBe("UNKNOWN");
+    expect(payload.message).toBe("Internal server error.");
+  });
+
+  it("recognizes Fastify's invalid-content-length error constructor", async () => {
+    const server = createSyntheticServer();
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/__test__/throw?spoof=actual-content-length",
+    });
+    const payload = StructuredErrorSchema.parse(response.json());
+
+    expect(response.statusCode).toBe(400);
+    expect(payload.code).toBe("VALIDATION_ERROR");
+    expect(payload.message).toBe("Request validation failed.");
+  });
+
   it("returns a bounded SERVICE_UNAVAILABLE error after transport drain begins", async () => {
     const server = createSyntheticServer();
     server.beginTransportDrain();
@@ -292,6 +331,18 @@ describe("safe framework errors", () => {
     expect(payload.message).toBe("Request validation failed.");
   });
 
+  it("keeps malformed URL errors correlated without exposing router internals", async () => {
+    const server = createSyntheticServer();
+
+    const response = await server.inject({ method: "GET", url: "/%world" });
+    const payload = StructuredErrorSchema.parse(response.json());
+
+    expect(response.statusCode).toBe(404);
+    expect(payload.code).toBe("NOT_FOUND");
+    expect(payload.correlation_id).toBe(response.headers["x-request-id"]);
+    expect(response.body).not.toContain("FST_ERR_BAD_URL");
+  });
+
   it("rejects oversized payloads at the transport boundary", async () => {
     const server = createSyntheticServer();
 
@@ -343,5 +394,18 @@ describe("server identification", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers.server).toBeUndefined();
     expect(response.headers["x-powered-by"]).toBeUndefined();
+  });
+
+  it("does not emit wildcard CORS headers", async () => {
+    const server = createSyntheticServer();
+    const response = await server.inject({
+      method: "GET",
+      url: "/__test__/ok",
+      headers: { origin: "https://synthetic.example" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["access-control-allow-origin"]).toBeUndefined();
+    expect(response.headers["access-control-allow-credentials"]).toBeUndefined();
   });
 });

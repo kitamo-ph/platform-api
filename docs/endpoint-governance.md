@@ -248,7 +248,7 @@ follow-up approval requirements.
 
 API-1 contract consumption is no longer blocked by package absence, and API-2
 has locally implemented the framework/runtime foundation. API-2 acceptance is
-still conditional on its final clean-environment, runtime-smoke, publication,
+still conditional on its final clean-environment, runtime-smoke, Git push,
 and CI gates. Production operations remain **Blocked / not approved**:
 
 - there are no approved operation records;

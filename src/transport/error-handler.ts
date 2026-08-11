@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import { errorCodes, type FastifyInstance, type FastifyRequest } from "fastify";
 
 import {
   CorrelationIdSchema,
@@ -12,16 +12,10 @@ interface ErrorResponse {
   readonly payload: StructuredError;
 }
 
-const VALIDATION_ERROR_CODES = new Set([
-  "FST_ERR_VALIDATION",
-  "FST_ERR_CTP_EMPTY_JSON_BODY",
-  "FST_ERR_CTP_INVALID_JSON_BODY",
-  "FST_ERR_CTP_INVALID_CONTENT_LENGTH",
-  "FST_ERR_CTP_INVALID_MEDIA_TYPE",
-]);
+const VALIDATION_CONTEXTS = new Set(["body", "headers", "params", "querystring"]);
 
 export function createTransportErrorPayload(
-  request: FastifyRequest,
+  requestId: string,
   code: StructuredErrorCode,
   message: string,
   retryable = false,
@@ -29,45 +23,63 @@ export function createTransportErrorPayload(
   return StructuredErrorSchema.parse({
     code,
     message,
-    correlation_id: CorrelationIdSchema.parse(request.id),
+    correlation_id: CorrelationIdSchema.parse(requestId),
     retryable,
   });
 }
 
-function readFrameworkError(error: unknown): {
-  readonly code: string | undefined;
-} {
-  if (typeof error !== "object" || error === null) {
-    return { code: undefined };
+function isSchemaValidationFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const record = error as Error & Record<string, unknown>;
+  if (
+    record["code"] !== "FST_ERR_VALIDATION" ||
+    record["statusCode"] !== 400 ||
+    typeof record["validationContext"] !== "string" ||
+    !VALIDATION_CONTEXTS.has(record["validationContext"])
+  ) {
+    return false;
   }
-  const record = error as Record<string, unknown>;
-  return {
-    code: typeof record["code"] === "string" ? record["code"] : undefined,
-  };
-}
-
-function isValidationFailure(code: string | undefined): boolean {
-  return VALIDATION_ERROR_CODES.has(code ?? "");
+  const validation = record["validation"];
+  return (
+    Array.isArray(validation) &&
+    validation.length > 0 &&
+    validation.every((issue: unknown) => {
+      if (typeof issue !== "object" || issue === null) return false;
+      const candidate = issue as Record<string, unknown>;
+      return (
+        typeof candidate["instancePath"] === "string" &&
+        typeof candidate["schemaPath"] === "string" &&
+        typeof candidate["keyword"] === "string" &&
+        typeof candidate["params"] === "object" &&
+        candidate["params"] !== null
+      );
+    })
+  );
 }
 
 function classifyError(error: unknown, request: FastifyRequest): ErrorResponse {
-  const frameworkError = readFrameworkError(error);
-  if (frameworkError.code === "FST_ERR_CTP_BODY_TOO_LARGE") {
+  if (error instanceof errorCodes.FST_ERR_CTP_BODY_TOO_LARGE) {
     return {
       statusCode: 413,
       payload: createTransportErrorPayload(
-        request,
+        request.id,
         "VALIDATION_ERROR",
         "Request body exceeds the permitted size.",
       ),
     };
   }
 
-  if (isValidationFailure(frameworkError.code)) {
+  if (
+    isSchemaValidationFailure(error) ||
+    error instanceof errorCodes.FST_ERR_CTP_EMPTY_JSON_BODY ||
+    error instanceof errorCodes.FST_ERR_CTP_INVALID_JSON_BODY ||
+    error instanceof errorCodes.FST_ERR_CTP_INVALID_CONTENT_LENGTH ||
+    error instanceof errorCodes.FST_ERR_CTP_INVALID_MEDIA_TYPE
+  ) {
     return {
-      statusCode: frameworkError.code === "FST_ERR_CTP_INVALID_MEDIA_TYPE" ? 415 : 400,
+      statusCode: error instanceof errorCodes.FST_ERR_CTP_INVALID_MEDIA_TYPE ? 415 : 400,
       payload: createTransportErrorPayload(
-        request,
+        request.id,
         "VALIDATION_ERROR",
         "Request validation failed.",
       ),
@@ -76,13 +88,14 @@ function classifyError(error: unknown, request: FastifyRequest): ErrorResponse {
 
   return {
     statusCode: 500,
-    payload: createTransportErrorPayload(request, "UNKNOWN", "Internal server error."),
+    payload: createTransportErrorPayload(request.id, "UNKNOWN", "Internal server error."),
   };
 }
 
 export function installTransportErrorHandling(server: FastifyInstance): void {
   server.setNotFoundHandler((request, reply) => {
-    const payload = createTransportErrorPayload(request, "NOT_FOUND", "Route not found.");
+    reply.header("x-request-id", request.id);
+    const payload = createTransportErrorPayload(request.id, "NOT_FOUND", "Route not found.");
     return reply.code(404).type("application/json; charset=utf-8").send(payload);
   });
 

@@ -2,17 +2,17 @@
 
 ## Record status
 
-| Item                       | Value                                                                                               |
-| -------------------------- | --------------------------------------------------------------------------------------------------- |
-| Current review date        | 2026-08-11 (Asia/Manila)                                                                            |
-| Historical inspection date | 2026-07-25 (Asia/Manila)                                                                            |
-| Milestone                  | API-2 server runtime and transport foundation                                                       |
-| API-0 status               | Complete; accepted baseline commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                       |
-| API-1 status               | Complete for the bounded Shared Contracts consumer foundation                                       |
-| API-2 status               | Implemented locally; final clean-environment, runtime-smoke, publication, and CI acceptance pending |
-| Shared Contracts authority | `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`                      |
-| Framework                  | Fastify `5.11.3`, approved for transport only                                                       |
-| Production status          | Zero production operations/routes; deployment and production startup are not authorized             |
+| Item                       | Value                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| Current review date        | 2026-08-11 (Asia/Manila)                                                                         |
+| Historical inspection date | 2026-07-25 (Asia/Manila)                                                                         |
+| Milestone                  | API-2 server runtime and transport foundation                                                    |
+| API-0 status               | Complete; accepted baseline commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                    |
+| API-1 status               | Complete for the bounded Shared Contracts consumer foundation                                    |
+| API-2 status               | Implemented locally; final clean-environment, runtime-smoke, Git push, and CI acceptance pending |
+| Shared Contracts authority | `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`                   |
+| Framework                  | Fastify `5.11.3`, approved for transport only                                                    |
+| Production status          | Zero production operations/routes; deployment and production startup are not authorized          |
 
 This inventory records the repository state found before API-0 files were
 created. The Platform API directory was empty and was not a Git repository at

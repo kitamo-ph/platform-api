@@ -69,9 +69,11 @@ describe("structured operational logging", () => {
       nestedPassword: "synthetic-nested-password-value",
       nestedSecret: "synthetic-nested-secret-value",
       nestedToken: "synthetic-nested-token-value",
+      setCookie: "synthetic-set-cookie-value",
+      responseBody: "synthetic-response-body-value",
     } as const;
 
-    server.post("/__test__/redaction", (request) => {
+    server.post("/__test__/redaction", (request, reply) => {
       request.log.info(
         {
           authorization: secrets.authorization,
@@ -94,7 +96,8 @@ describe("structured operational logging", () => {
         },
         "Synthetic redaction probe",
       );
-      return { ok: true };
+      reply.header("set-cookie", secrets.setCookie);
+      return { ok: true, private_response: secrets.responseBody };
     });
 
     const response = await server.inject({
@@ -119,6 +122,10 @@ describe("structured operational logging", () => {
     expect(probe?.["authorization"]).toBe(REDACTED);
     expect(probe?.["password"]).toBe(REDACTED);
     expect(probe?.["token"]).toBe(REDACTED);
+
+    for (const line of capture.text().split("\n").filter(Boolean)) {
+      expect(line.match(/"request_id":/gu) ?? []).toHaveLength(1);
+    }
   });
 
   it("never logs raw exception messages, stacks, or request bodies", async () => {

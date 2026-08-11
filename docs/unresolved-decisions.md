@@ -16,7 +16,7 @@ foundation only. Merchant operations, identity, authorization, persistence,
 production sync, audit persistence, privacy, production observability,
 production runtime, and deployment decisions below remain Proposed,
 Unresolved, or Blocked as stated. API-2 acceptance remains conditional on final
-clean-environment, runtime-smoke, publication, and CI evidence.
+clean-environment, runtime-smoke, Git push, and CI evidence.
 
 ## API-ARCH-001 — Server framework
 

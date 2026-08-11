@@ -43,6 +43,20 @@ export function createServer(options: CreateServerOptions = {}): PlatformServer 
     allowErrorHandlerOverride: false,
     onProtoPoisoning: "error",
     onConstructorPoisoning: "error",
+    routerOptions: {
+      onBadUrl(path, request, response) {
+        void path;
+        void request;
+        const requestId = generateInternalRequestId();
+        const payload = createTransportErrorPayload(requestId, "NOT_FOUND", "Route not found.");
+        const body = JSON.stringify(payload);
+        response.statusCode = 404;
+        response.setHeader("content-type", "application/json; charset=utf-8");
+        response.setHeader("content-length", Buffer.byteLength(body));
+        response.setHeader("x-request-id", requestId);
+        response.end(body);
+      },
+    },
   });
 
   let isDraining = false;
@@ -57,7 +71,7 @@ export function createServer(options: CreateServerOptions = {}): PlatformServer 
     reply.header("x-request-id", request.id);
     if (isDraining) {
       const payload = createTransportErrorPayload(
-        request,
+        request.id,
         "SERVICE_UNAVAILABLE",
         "Service temporarily unavailable.",
         true,
@@ -69,10 +83,7 @@ export function createServer(options: CreateServerOptions = {}): PlatformServer 
       reply.code(503).type("application/json; charset=utf-8").send(payload);
       return;
     }
-    request.log.info(
-      { event: "request.received", request_id: request.id, method: request.method },
-      "Request received",
-    );
+    request.log.info({ event: "request.received", method: request.method }, "Request received");
     done();
   });
 
@@ -80,7 +91,6 @@ export function createServer(options: CreateServerOptions = {}): PlatformServer 
     request.log.info(
       {
         event: "request.completed",
-        request_id: request.id,
         method: request.method,
         status_code: reply.statusCode,
         elapsed_ms: Math.round(reply.elapsedTime),

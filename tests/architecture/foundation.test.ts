@@ -126,7 +126,7 @@ describe("API-2 transport and runtime architecture", () => {
       if (/^src\/(?:application|policies|ports|contracts|config)\//u.test(source.path)) {
         expect(source.text, source.path).not.toMatch(/\bFastify\b|["'`]@?fastify/u);
         expect(source.text, source.path).not.toMatch(
-          /["'`](?:\.\.\/)+(?:transport|composition|runtime|index)(?:\/|["'`])/u,
+          /["'`](?:\.\.\/)+(?:transport|composition|runtime)(?:\/|["'`])|["'`](?:\.\.\/)+index(?:\.[cm]?[jt]sx?)?["'`]/u,
         );
       }
     }
@@ -162,11 +162,9 @@ describe("API-2 transport and runtime architecture", () => {
     const prohibitedRouteLiteral = /["'`]\/(?:__test__|api|health|ready|metrics)(?:\/|["'`])/iu;
 
     for (const source of sources) {
-      if (/^src\/(?:transport|composition|runtime)\//u.test(source.path)) {
-        const routeCandidateText = source.text.replace(/\bReflect\.get\s*\(/gu, "");
-        expect(routeCandidateText, source.path).not.toMatch(routeRegistration);
-        expect(routeCandidateText, source.path).not.toMatch(bracketRouteRegistration);
-      }
+      const routeCandidateText = source.text.replace(/\bReflect\.get\s*\(/gu, "");
+      expect(routeCandidateText, source.path).not.toMatch(routeRegistration);
+      expect(routeCandidateText, source.path).not.toMatch(bracketRouteRegistration);
       expect(source.text, source.path).not.toMatch(prohibitedRouteLiteral);
       expect(source.path, source.path).not.toMatch(/\/(?:routes?|handlers?|controllers?)\//iu);
     }
