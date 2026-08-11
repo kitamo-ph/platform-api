@@ -15,15 +15,18 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "check:transport": "vitest run tests/transport tests/runtime",
     "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/runtime/start.js",
     "check:contracts": "vitest run tests/contracts tests/compatibility",
     "check:architecture": "vitest run tests/architecture",
     "security:secrets": "node scripts/check-secrets.mjs",
     "audit": "npm audit --audit-level=high",
-    "verify": "npm run prepare:contracts && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run check:contracts && npm run check:architecture && npm run build && npm run security:secrets && npm run audit"
+    "verify": "npm run prepare:contracts && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run check:contracts && npm run check:architecture && npm run check:transport && npm run build && npm run security:secrets && npm run audit"
   },
   "dependencies": {
-    "@kitamo/shared-contracts": "https://codeload.github.com/kitamo-ph/shared-contracts/tar.gz/a380f19f2adcf0557b424461f869aa3d0069e176"
+    "@kitamo/shared-contracts": "https://codeload.github.com/kitamo-ph/shared-contracts/tar.gz/a380f19f2adcf0557b424461f869aa3d0069e176",
+    "fastify": "5.11.3"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
