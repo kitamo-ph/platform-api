@@ -1,0 +1,24 @@
+# API-TRANSPORT-002 — Framework-independent inward layers
+
+- **ID:** API-TRANSPORT-002
+- **Title:** Framework-independent inward layers
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 dependency-direction and application-layer protection authorization dated 2026-08-11
+- **Context:** Fastify is an outer transport mechanism. Application behavior, policies, ports, and the Shared Contracts consumer boundary must remain usable without HTTP or vendor objects.
+- **Decision:** `src/application`, `src/policies`, `src/ports`, and `src/contracts` must not import Fastify or `@fastify/*`. HTTP request, reply, and framework error objects may not enter application services or ports. Fastify imports are limited to approved transport, composition, and runtime files, with dependencies pointing inward.
+- **Rationale:** Framework-independent interfaces keep transport concerns replaceable and prevent HTTP details from becoming business or contract meaning.
+- **Alternatives:** Passing Fastify request/reply objects through services, defining ports in terms of Fastify types, or importing Shared Contracts directly from route code were rejected.
+- **Consequences:** Transport translates only approved boundary values. Empty application, policy, and port layers are not created until real approved behavior requires them.
+- **Security impact:** Centralizes untrusted transport handling and prevents framework state from being mistaken for authenticated or authorized context.
+- **Privacy impact:** Limits propagation of raw headers, payloads, IP data, and request objects.
+- **Persistence impact:** Future database or vendor objects remain behind ports and cannot enter application types.
+- **Compatibility impact:** Shared Contracts remains the stable canonical boundary independently of Fastify.
+- **Affected repositories:** `platform-api` only.
+- **Implementation gate:** Architecture checks must reject direct or transitive outward dependency patterns from protected inward layers and preserve the single Shared Contracts package boundary.
+- **Verification:** Source-import scans across TypeScript and JavaScript module variants, contract-boundary tests, and strict typechecking.
+- **Reconsideration conditions:** None within the modular service architecture; a replacement framework must preserve the same inward dependency rule.
+- **Supersedes:** None
+- **Superseded by:** None

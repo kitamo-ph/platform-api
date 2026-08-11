@@ -15,7 +15,7 @@ Historical API-0 evidence at 2026-07-25 was:
   Platform API consumption; and
 - API-1 was blocked.
 
-Current API-1 evidence at 2026-08-11 is:
+Current API-1/API-2 evidence at 2026-08-11 is:
 
 - API-0 is complete at
   `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`;
@@ -23,9 +23,12 @@ Current API-1 evidence at 2026-08-11 is:
 - `@kitamo/shared-contracts@0.1.0` is available at accepted commit
   `a380f19f2adcf0557b424461f869aa3d0069e176`;
 - Platform API has a transport-neutral, public-export-only contract boundary;
+- Fastify `5.11.3` is approved and locally implemented as a transport-only
+  server factory with an explicit runtime entrypoint;
 - no Platform API operation exists or is approved; and
-- no HTTP route, framework, listener, OpenAPI operation, authentication,
-  persistence, cloud integration, production sync, or deployment exists.
+- the production server registers zero routes and has no OpenAPI operation,
+  authentication, persistence, cloud integration, production sync, or
+  deployment. Synthetic test routes are registered only by test code.
 
 **A route that compiles, starts, responds, passes tests, or appears in OpenAPI
 is not sufficient evidence that the operation is approved.**
@@ -243,17 +246,23 @@ follow-up approval requirements.
 
 ## Current gate result
 
-API-1 contract consumption is no longer blocked by package absence. Production
-operations remain **Blocked / not approved**:
+API-1 contract consumption is no longer blocked by package absence, and API-2
+has locally implemented the framework/runtime foundation. API-2 acceptance is
+still conditional on its final clean-environment, runtime-smoke, publication,
+and CI gates. Production operations remain **Blocked / not approved**:
 
 - there are no approved operation records;
 - merchant-domain request/response contracts are intentionally absent;
-- runtime, framework, identity, authorization, persistence, idempotency,
-  audit, rate-limit, versioning, and deployment decisions remain unapproved;
-  and
+- framework existence is not operation approval, and production source
+  registers zero routes;
+- identity, authorization, persistence, idempotency, audit, rate-limit,
+  versioning, production runtime/deployment, and consumer decisions remain
+  unapproved; and
 - production behavior is outside the authorized milestone.
 
-The bounded safe next gate, after API-1 verification and CI acceptance, is
-API-2 server runtime and transport foundation under separate authorization.
-API-2 must not create a production-facing operation without a complete record
-and explicit approval under this document.
+If API-2 receives final acceptance, the bounded next gate is API-3 identity,
+authorization, and trusted request-context foundation under separate
+authorization. API-3 remains blocked if authoritative external-identity,
+canonical-user, membership, role, and authorization decisions are missing. No
+future milestone may create a production-facing operation without a complete
+record and explicit approval under this document.

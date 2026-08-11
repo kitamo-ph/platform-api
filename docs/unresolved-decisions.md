@@ -2,7 +2,7 @@
 
 Current review date: 2026-08-11
 Historical inspection date: 2026-07-25
-Register scope: API-1 decisions and remaining gates for future Platform API work
+Register scope: API-1/API-2 decisions and remaining gates for future Platform API work
 
 API-0 began from a non-Git Platform API directory and an empty Shared Contracts
 repository. Those dated findings remain historical. Platform API is now a Git
@@ -10,24 +10,32 @@ repository, and Shared Contracts SC-0 through SC-4 provide the accepted
 `@kitamo/shared-contracts@0.1.0` public surface at commit
 `a380f19f2adcf0557b424461f869aa3d0069e176`.
 
-API-1 approves only the bounded internal decisions recorded under
-`decision-log/decisions/`. The framework/server, merchant operations, identity,
-authorization, persistence, production sync, audit persistence, privacy,
-reliability, and deployment decisions below remain Proposed, Unresolved, or
-Blocked as stated.
+API-1 approves the bounded Shared Contracts consumer decisions recorded under
+`decision-log/decisions/`. API-2 approves Fastify and the bounded local transport
+foundation only. Merchant operations, identity, authorization, persistence,
+production sync, audit persistence, privacy, production observability,
+production runtime, and deployment decisions below remain Proposed,
+Unresolved, or Blocked as stated. API-2 acceptance remains conditional on final
+clean-environment, runtime-smoke, publication, and CI evidence.
 
 ## API-ARCH-001 — Server framework
 
-- **Status:** Proposed
-- **Decision needed:** Select the framework and plugin policy for a future
-  modular HTTP service.
+- **Status:** Approved for API-2 transport only
+- **Decision:** Fastify `5.11.3` is the Platform API HTTP transport framework.
+  The approval covers the server factory, injection testing, framework-level
+  logging/errors, and explicit runtime lifecycle only.
+- **Durable record:**
+  `decision-log/decisions/api-arch-001-fastify-transport.md`.
 - **Why it matters:** It controls route composition, boundary validation,
   logging, OpenAPI integration, testability, and shutdown behavior.
-- **Current evidence:** The brief permits a minimal framework such as Fastify;
-  no Platform API implementation or approved framework decision exists.
-- **Missing evidence:** Deployment constraints, security review, performance
-  requirements. The Shared Contracts consumer boundary is now verified
-  independently of the framework.
+- **Current evidence:** Fastify `5.11.3` is exactly pinned and locally
+  implemented on the Node 20/TypeScript 5.9/ESM/Vitest foundation. The server
+  factory, configuration, logging, safe errors, injection, and shutdown
+  boundaries are implemented without a production route or speculative plugin.
+- **Remaining limits:** Deployment constraints, production performance and
+  capacity evidence, hosting security review, and operation-specific plugin
+  policy remain unresolved. The Shared Contracts boundary remains independently
+  verified and framework-free.
 - **Affected repositories:** `platform-api`; indirectly all future API
   consumers.
 - **Contract impact:** The framework must accept Shared Contracts schemas
@@ -46,25 +54,28 @@ Blocked as stated.
   framework.
 - **Sync impact:** No sync ownership or mutation is authorized.
 - **Offline impact:** No change to Android offline authority.
-- **Options:** Fastify; Hono; Express; a Node HTTP-only shell.
-- **Safest current recommendation:** Evaluate Fastify first and keep the
-  decision **Proposed** until deployment and security constraints are known.
-- **Required approvers:** Platform API architect and security owner; deployment
-  owner when identified.
-- **Blocking milestones:** Any production route or framework scaffold beyond a
-  separately approved bootstrap.
+- **Rejected alternatives:** Hono, Express, and a locally assembled Node
+  HTTP-only shell add no demonstrated advantage for this bounded transport and
+  would increase local conventions or maintenance.
+- **Required approvers:** Platform API milestone owner for the bounded transport;
+  deployment and security owners remain required for production hosting.
+- **Blocking milestones:** None for the API-2 transport foundation. Every
+  production operation and deployment remains independently blocked.
 
 ## API-ARCH-002 — Runtime and deployment target
 
-- **Status:** Unresolved
+- **Status:** Unresolved for production runtime and deployment
 - **Decision needed:** Approve the production Node support policy, process
-  model, hosting target, and runtime limits. API-1 already fixes ESM, Node
-  `>=20.19.4`, and CI Node `20.20.0` for the tooling foundation.
+  model, hosting target, binding/proxy policy, and runtime limits. API-1 fixes
+  ESM, Node `>=20.19.4`, and CI Node `20.20.0`; API-2 adds an explicit local
+  long-lived-process startup/shutdown model only.
 - **Why it matters:** These constraints determine framework compatibility,
   cold starts, shutdown, observability, and connection management.
-- **Current evidence:** API-1 enforces Node `>=20.19.4`, uses Node `20.20.0` in
-  CI, and builds strict TypeScript as ESM. No server process model, host, or
-  deployment file exists.
+- **Current evidence:** The local runtime validates configuration, constructs
+  and prepares Fastify before binding, uses loopback-safe local behavior, handles
+  `SIGINT`/`SIGTERM`, and closes Fastify cleanly. `NODE_ENV=production` fails
+  closed because no production deployment policy exists. No deployment file or
+  public binding is approved.
 - **Missing evidence:** Approved host, support window, regional/data-residency
   needs, scaling model, and operational ownership.
 - **Affected repositories:** `platform-api`; CI and operations.
@@ -83,8 +94,9 @@ Blocked as stated.
 - **Offline impact:** No change to local offline behavior.
 - **Options:** Long-lived Node service; approved serverless Node target;
   containerized Node service.
-- **Safest current recommendation:** Retain the verified API-1 tooling baseline
-  and defer production hosting, server lifecycle, and process decisions.
+- **Safest current recommendation:** Retain the verified API-1 tooling and API-2
+  lifecycle boundary, and defer production hosting, public binding, proxy,
+  scaling, and orchestration decisions.
 - **Required approvers:** Platform API architect, operations owner, security
   owner, and privacy owner where residency is affected.
 - **Blocking milestones:** Production deployment, persistence, or external
@@ -133,10 +145,10 @@ Blocked as stated.
   validation and how validation failures are handled and observed.
 - **Why it matters:** TypeScript alone cannot prove emitted runtime payloads
   conform to shared schemas.
-- **Current evidence:** The brief prefers inbound and outbound runtime
-  validation where practical. API-1 proves public primitive schemas and a
-  transport-neutral adapter; no merchant response schema or HTTP framework
-  exists.
+- **Current evidence:** API-1 proves public primitive schemas and a
+  transport-neutral adapter. API-2 maps bounded framework failures through safe
+  structured-error semantics, but it has no merchant route or merchant response
+  schema to validate.
 - **Missing evidence:** Public response schemas, performance budgets, error
   policy, sampling policy if any, and framework integration.
 - **Affected repositories:** `shared-contracts`, `platform-api`, and all future
@@ -463,14 +475,21 @@ Blocked as stated.
 
 ## API-RELIABILITY-001 — Operational logging
 
-- **Status:** Proposed
-- **Decision needed:** Approve log structure, severity, redaction, correlation,
-  sampling, retention, sinks, access, and incident ownership.
+- **Status:** Proposed for production; the bounded API-2 local baseline is
+  approved separately under `API-TRANSPORT-008`
+- **Decision:** Use Fastify structured operational logs with bounded severity,
+  safe request identifiers, default credential/header redaction, and no request
+  or response body logging. Operational logs are not canonical audit.
+- **Durable record:**
+  `decision-log/decisions/api-transport-008-redacted-operational-logging.md`.
+- **Decision still needed:** Approve production sampling, retention, sinks,
+  access, regional placement, and incident ownership.
 - **Why it matters:** Useful diagnosis must not expose credentials, personal
   data, or merchant payloads.
-- **Current evidence:** The architecture direction calls for structured
-  observability and `CorrelationIdSchema` is consumable; no logger, provider,
-  deployment, or data classification exists.
+- **Current evidence:** API-2 implements framework-native structured logging and
+  tests redaction. `CorrelationIdSchema` remains consumable through the contract
+  boundary, while Fastify request IDs remain internal operational identifiers.
+  No provider, deployment, or production retention policy exists.
 - **Missing evidence:** Hosting/log sink, correlation propagation policy,
   privacy classification, retention, support process, and cost limits.
 - **Affected repositories:** `platform-api`; operations and support.
@@ -489,9 +508,9 @@ Blocked as stated.
   trust rules.
 - **Options:** Framework-native structured logger; OpenTelemetry-compatible
   abstraction; approved managed log adapter.
-- **Safest current recommendation:** Propose structured JSON events with
-  allowlisted fields and default redaction; select a sink only after hosting
-  approval.
+- **Safest current recommendation:** Preserve the bounded structured/redacted
+  baseline and select a production sink, access policy, and retention only after
+  hosting and privacy approval.
 - **Required approvers:** Platform API, operations, security, and privacy
   owners.
 - **Blocking milestones:** Production observability and support operations.
@@ -503,8 +522,9 @@ Blocked as stated.
   credentials, and preflight caching are allowed per environment and operation.
 - **Why it matters:** Browser reachability is an explicit trust boundary, not a
   default framework setting.
-- **Current evidence:** No production endpoints, domains, Admin API, Website
-  API, environment model, or authentication scheme is approved.
+- **Current evidence:** API-2 intentionally installs no CORS plugin and exposes
+  no production route. No production domains, browser operation, environment
+  topology, or authentication scheme is approved.
 - **Missing evidence:** Approved consumer origins, deployment domains,
   credential strategy, environment separation, and threat model.
 - **Affected repositories:** `platform-api`, Admin, Website; potentially
@@ -537,9 +557,10 @@ Blocked as stated.
   exemptions, distributed enforcement, errors, headers, and incident override.
 - **Why it matters:** Limits protect availability and abuse surfaces but can
   also reject legitimate offline retries or shared-network users.
-- **Current evidence:** A structured error primitive exists, but no operation
-  inventory, identity, traffic profile, deployment topology, or production sync
-  behavior exists.
+- **Current evidence:** API-2 intentionally installs no rate-limit plugin. A
+  structured error primitive and bounded body limit exist, but no operation
+  inventory, identity, traffic profile, deployment topology, distributed store,
+  or production sync behavior exists.
 - **Missing evidence:** Threat model, capacity targets, client retry policy,
   trusted proxy rules, tenancy keys, and support process.
 - **Affected repositories:** `platform-api` and every future consumer.
@@ -653,10 +674,12 @@ Blocked as stated.
 
 ## Register-level coordination
 
-The Shared Contracts package and Git-bootstrap blockers are resolved for API-1.
-The first remaining blockers are operation-specific: framework/transport,
-merchant contracts, identity and authorization, persistence and idempotency,
-audit policy/storage, privacy, production sync, reliability, and deployment.
+The Shared Contracts package/Git-bootstrap blockers are resolved for API-1, and
+the local server/transport choice is resolved for API-2. The remaining blockers
+are operation- and production-specific: merchant contracts, identity and
+authorization, persistence and idempotency, audit policy/storage, privacy,
+production sync, production observability, runtime/deployment topology, CORS,
+and rate limiting.
 
 No production milestone should begin from this register. Each decision that
 crosses an authority boundary must be promoted into a durable decision record

@@ -1,11 +1,12 @@
 # Shared Contracts Consumption Evidence
 
-## Current API-1 outcome (2026-08-11)
+## Current API-1 foundation and API-2 preservation (2026-08-11)
 
 ```text
 API-0: complete
 Shared Contracts SC-0 through SC-4: complete and frozen for this phase
 API-1: complete for the bounded Shared Contracts consumer foundation
+API-2: transport foundation implemented locally; final acceptance pending
 Production API implementation: not authorized
 ```
 
@@ -22,10 +23,11 @@ The accepted authority is:
 | Pin record                 | `config/shared-contracts-pin.json`                                                                       |
 | Runtime boundary           | `src/contracts/shared-contracts.ts`                                                                      |
 
-This resolves the historical package-absence blocker only. It does not create
+This resolves the historical package-absence blocker only. API-2 builds a
+transport server around this unchanged boundary, but it does not create
 merchant-domain schemas, an authenticated principal, authorization, database
-models, production sync, audit persistence, support workflow, routes, or a
-server.
+models, production sync, audit persistence, support workflow, or any production
+route.
 
 ## Reproducible acquisition and build
 
@@ -107,7 +109,7 @@ commit `a380f19f2adcf0557b424461f869aa3d0069e176`.
 
 | Contract area                                       | Classification                          | Exact public path and symbol(s)                                                                                                                           | Version / SC commit                                  | Platform API adapter and tests                                                | Limitation or blocker                                                                                                       |
 | --------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Contract version                                    | **Confirmed**                           | `@kitamo/shared-contracts/versions`: `ContractVersionSchema`, `CURRENT_CONTRACT_VERSION`, `SUPPORTED_CONTRACT_VERSIONS`, `assertSupportedContractVersion` | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | `requireSupportedContractVersion`; valid, malformed, and unsupported fixtures | Only `0.1.0` is supported; HTTP negotiation belongs to API-2 or an operation decision                                       |
+| Contract version                                    | **Confirmed**                           | `@kitamo/shared-contracts/versions`: `ContractVersionSchema`, `CURRENT_CONTRACT_VERSION`, `SUPPORTED_CONTRACT_VERSIONS`, `assertSupportedContractVersion` | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | `requireSupportedContractVersion`; valid, malformed, and unsupported fixtures | Only `0.1.0` is supported; production HTTP negotiation remains an operation decision                                        |
 | Opaque identifiers                                  | **Confirmed with limits**               | `@kitamo/shared-contracts/identifiers`: `EntityIdSchema` and branded ID schemas                                                                           | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Re-export through adapter; valid/invalid/round-trip tests                     | No generation, prefix parsing, UUID assumption, or entity inference                                                         |
 | Business identifiers                                | **Confirmed**                           | `@kitamo/shared-contracts/identifiers`: `BusinessIdSchema`; `@kitamo/shared-contracts/businesses`: `BusinessReferenceSchema`                              | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Public adapter and business-reference fixtures                                | Structural scope only; no ownership or authorization                                                                        |
 | Stall identifiers                                   | **Confirmed with limits**               | `@kitamo/shared-contracts/identifiers`: `StallIdSchema`; `@kitamo/shared-contracts/stalls`: `StallReferenceSchema`                                        | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Public adapter and stall-reference fixtures; source scan rejects `branch_id`  | No Android `branch` conversion or authorization semantics                                                                   |
@@ -120,10 +122,10 @@ commit `a380f19f2adcf0557b424461f869aa3d0069e176`.
 | Decimal quantity                                    | **Limited**                             | `@kitamo/shared-contracts/units`: signed/non-negative quantity schemas; `@kitamo/shared-contracts/money`: `HighPrecisionDecimalSchema`                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Precision/grammar tests                                                       | Serialization only; no stock math or business calculation                                                                   |
 | Units                                               | **Limited**                             | `@kitamo/shared-contracts/units`: unit-code, reference, and quantity-with-unit schemas                                                                    | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Current `g`, `kg`, and packaging-registry tests                               | Bounded registry only; no aliases, local vocabulary expansion, or conversion                                                |
 | Pagination                                          | **Limited**                             | `@kitamo/shared-contracts/pagination`: request, page-size, opaque-cursor, metadata, result helper                                                         | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Bounds, opacity, and `has_more`/`next_cursor` invariant tests                 | Cursor encoding, stable ordering, expiry, filtering, and lifecycle are operation-specific                                   |
-| Structured errors                                   | **Limited**                             | `@kitamo/shared-contracts/errors`: `StructuredErrorCodeSchema`, `StructuredErrorSchema`                                                                   | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | All approved codes, unknown code, correlation, retryability, strictness tests | No HTTP status mapping, localization policy, or internal-error disclosure mapping                                           |
+| Structured errors                                   | **Limited**                             | `@kitamo/shared-contracts/errors`: `StructuredErrorCodeSchema`, `StructuredErrorSchema`                                                                   | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Contract cases plus bounded framework-error mapping tests                     | API-2 maps only framework failures; operation-specific HTTP mapping and localization remain blocked                         |
 | Field-level violations                              | **Confirmed with limits**               | `@kitamo/shared-contracts/errors`: `FieldIssueSchema`                                                                                                     | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Path/code/message and strictness fixtures                                     | Used only inside the shared error boundary; no competing envelope                                                           |
 | Audit envelope                                      | **Limited**                             | `@kitamo/shared-contracts/audit`: `AuditOutcomeSchema`, `AuditEventSchema`                                                                                | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Positive/negative audit fixtures                                              | Metadata shape only; actor/role authority, event policy, persistence, integrity, access, and retention blocked              |
-| Correlation identifiers                             | **Confirmed**                           | `@kitamo/shared-contracts/identifiers`: `CorrelationIdSchema`                                                                                             | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Contract-context and identifier tests                                         | Correlation is observability context, not identity or authorization                                                         |
+| Correlation identifiers                             | **Confirmed**                           | `@kitamo/shared-contracts/identifiers`: `CorrelationIdSchema`                                                                                             | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Contract-context and identifier tests                                         | Fastify request IDs are local operational context, not canonical correlation generation, identity, or authorization         |
 | Idempotency identifiers                             | **Missing / blocked**                   | No declared v0.1 public symbol                                                                                                                            | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | No substitute adapter or fake fixture                                         | Key contract, scoping, persistence, fingerprint, replay, retention, and conflicts remain unresolved                         |
 | Sync envelope                                       | **Limited**                             | `@kitamo/shared-contracts/sync`: `SyncEventNameSchema`, `SyncEventSchema`                                                                                 | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | Four-name and strict envelope fixtures                                        | Operational event metadata only; not upload/pull, batch, retry, acknowledgement, conflict resolution, or authority protocol |
 | Sync result                                         | **Missing / blocked**                   | No declared v0.1 public result symbol                                                                                                                     | `0.1.0` / `a380f19f2adcf0557b424461f869aa3d0069e176` | No local result schema                                                        | Production outcome/checkpoint/conflict/retry semantics remain unresolved                                                    |
@@ -148,9 +150,11 @@ commit `a380f19f2adcf0557b424461f869aa3d0069e176`.
   fixtures.
 - `tests/compatibility/pin-policy.test.ts` — wrong commit/version/integrity,
   absent package entry, malformed export map, and package/runtime drift.
-- `tests/architecture/foundation.test.ts` — adapter-only imports, no deep or
-  source-relative import, no copied Zod schemas, canonical stall terminology,
-  and no server/auth/persistence/cloud dependencies.
+- `tests/architecture/foundation.test.ts` and API-2 architecture coverage —
+  adapter-only Shared Contracts imports, no deep or source-relative import, no
+  copied Zod schemas, canonical stall terminology, layer-restricted Fastify and
+  listener use, zero production routes, and no auth/persistence/cloud
+  dependencies.
 
 ## Intentionally unavailable merchant areas
 

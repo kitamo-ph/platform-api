@@ -1,0 +1,24 @@
+# API-ARCH-001 — Fastify HTTP transport framework
+
+- **ID:** API-ARCH-001
+- **Title:** Fastify HTTP transport framework
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 execution authorization dated 2026-08-11, including authorization to approve Fastify when compatible; exact dependency `fastify@5.11.3`
+- **Context:** API-0 evaluated Fastify, Hono, and Express and left framework selection Proposed. API-1 established a strict ESM TypeScript 5.9 consumer boundary on Node `>=20.19.4`, with Node `20.20.0` in CI. API-2 requires an injectable HTTP transport, structured logging, bounded parsing, safe errors, and graceful close without authorizing an operation.
+- **Decision:** Fastify `5.11.3` is the approved Platform API HTTP transport framework. Its scope is transport construction, framework lifecycle, injection testing, request tracing, logging, and framework-level error handling only.
+- **Rationale:** Fastify supplies the required Node lifecycle, encapsulated composition, injection harness, structured logger integration, body limits, request identifiers, and graceful close in one maintained dependency. The exact release is compatible with the approved Node, TypeScript, ESM, and Vitest baseline as verified by API-2 gates.
+- **Alternatives:** Hono was not selected because its multi-runtime flexibility adds no value before a deployment target exists and would require more local operational conventions. Express was not selected because it requires more middleware assembly for validation, logging, injection, and lifecycle behavior. A Node HTTP-only shell would duplicate reviewed framework behavior.
+- **Consequences:** Fastify may be imported only by approved transport, composition, and runtime layers. Framework presence does not authorize a route, operation, plugin, OpenAPI projection, authentication mechanism, persistence adapter, or deployment target. New Fastify plugins require separate evidence and approval where their policy is unresolved.
+- **Security impact:** API-2 must enforce a bounded body limit, safe parser defaults, redacted logging, disabled proxy trust, safe errors, and an empty production route surface. CORS, rate limiting, credentials, and trust topology remain unresolved.
+- **Privacy impact:** Request and response bodies are not logged by default. No merchant or customer payload is authorized.
+- **Persistence impact:** None. Fastify objects must not enter persistence ports or application types.
+- **Compatibility impact:** API-1 Shared Contracts imports and version enforcement remain framework-independent. No consumer receives an endpoint compatibility promise.
+- **Affected repositories:** `platform-api` only; Shared Contracts, Android, Admin, Customer Mobile, and Website remain unchanged.
+- **Implementation gate:** Pin the exact Fastify release in the manifest and lockfile; keep framework imports out of inward layers; install no speculative plugin; register no production operation.
+- **Verification:** Node `20.20.0` CI, strict TypeScript and ESM builds, Fastify injection and lifecycle tests, dependency audit, architecture scans, and clean-environment verification.
+- **Reconsideration conditions:** Material Node incompatibility, an approved runtime target Fastify cannot support, an unmitigated security advisory, or evidence that lifecycle or maintenance requirements cannot be met.
+- **Supersedes:** None
+- **Superseded by:** None

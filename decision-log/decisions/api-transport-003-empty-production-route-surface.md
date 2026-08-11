@@ -1,0 +1,24 @@
+# API-TRANSPORT-003 — Empty production route surface
+
+- **ID:** API-TRANSPORT-003
+- **Title:** Empty production route surface
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 prohibition on production and merchant operations dated 2026-08-11
+- **Context:** API-2 proves transport construction and lifecycle. No merchant request/response contract or operation record is approved, and a placeholder or health route would still be an operation.
+- **Decision:** API-2 production source registers zero routes and implements zero merchant or production operations. It provides no health, user, business, stall, device, sale, inventory, recipe, production, report, synchronization, support, audit-query, Admin, customer, or placeholder endpoint.
+- **Rationale:** Framework readiness is independent of product-operation approval. An intentionally empty route surface avoids inventing contracts or weakening endpoint governance for a demonstration endpoint.
+- **Alternatives:** `/health`, `/api/v1/*`, empty placeholders, and undocumented internal routes were rejected.
+- **Consequences:** Every unmatched path receives only the generic framework not-found response. A future route requires a complete approved operation record before production registration.
+- **Security impact:** No unauthenticated domain capability or accidental data surface is exposed.
+- **Privacy impact:** No production request collection or merchant/customer payload handling is introduced.
+- **Persistence impact:** None.
+- **Compatibility impact:** No consumer may rely on an API-2 URL or response contract.
+- **Affected repositories:** `platform-api` only; all consumer repositories remain unchanged.
+- **Implementation gate:** Production source must contain no Fastify route registration, merchant path, health path, test-route path, OpenAPI operation, or runtime route plugin.
+- **Verification:** Production-source route scans, test-route isolation checks, runtime smoke showing an unknown path returns safe not-found, and endpoint-governance review showing zero approved operations.
+- **Reconsideration conditions:** A separately authorized milestone supplies a complete operation record and every required authority approval.
+- **Supersedes:** None
+- **Superseded by:** None

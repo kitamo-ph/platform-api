@@ -1,0 +1,24 @@
+# API-TRANSPORT-007 — CORS and rate-limit enforcement remain disabled
+
+- **ID:** API-TRANSPORT-007
+- **Title:** CORS and rate-limit enforcement remain disabled
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 direction to install neither CORS nor rate limiting before operation, consumer, identity, and topology policy exists, dated 2026-08-11
+- **Context:** API-2 has no browser-facing operation, identity, traffic profile, trusted proxy topology, distributed counter store, retry contract, or approved origin list.
+- **Decision:** Do not install or configure CORS or rate-limit plugins in API-2. Emit no wildcard or reflective cross-origin policy and invent no local or distributed quota. `API-SECURITY-001` and `API-SECURITY-002` retain their existing unresolved meanings.
+- **Rationale:** Safe absence is preferable to a permissive browser boundary or a speculative limiter that rejects legitimate future clients and cannot work consistently across deployments.
+- **Alternatives:** Wildcard CORS, reflected origins, in-memory production counters, IP-only limits, placeholder quotas, and speculative plugins were rejected.
+- **Consequences:** No browser consumer is enabled and no production abuse-control claim is made. Each future operation must supply its approved consumer and rate-limit policy.
+- **Security impact:** Avoids accidental cross-origin exposure and false confidence in an unscoped limiter; production exposure remains blocked.
+- **Privacy impact:** No origin, client-IP, device, or identity key is collected for rate limiting.
+- **Persistence impact:** No distributed counter store or vendor dependency is introduced.
+- **Compatibility impact:** Future consumers receive no CORS or rate-limit behavior guarantee from API-2.
+- **Affected repositories:** `platform-api` only; Admin, Website, and native clients gain no API access.
+- **Implementation gate:** No CORS/rate-limit dependency, plugin registration, wildcard header, quota, or retry metadata may appear.
+- **Verification:** Manifest and source scans, response-header tests, dependency audit, and unresolved-register review.
+- **Reconsideration conditions:** An approved operation identifies browser origins, credentials, methods, headers, identities, traffic budgets, topology, storage, errors, and accountable owners.
+- **Supersedes:** None
+- **Superseded by:** None

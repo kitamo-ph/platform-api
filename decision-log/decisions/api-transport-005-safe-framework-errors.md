@@ -1,0 +1,24 @@
+# API-TRANSPORT-005 — Safe framework error boundary
+
+- **ID:** API-TRANSPORT-005
+- **Title:** Safe framework error boundary
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 framework-error, not-found, validation, and unknown-error authorization dated 2026-08-11; accepted Shared Contracts `StructuredErrorSchema`
+- **Context:** Fastify parser, validation, routing, and handler failures must not expose stack traces, paths, dependency messages, payloads, or framework internals. Shared Contracts already defines bounded error codes and a strict error envelope.
+- **Decision:** Install one central Fastify error handler and a separate not-found handler. Unknown routes map to `NOT_FOUND` with HTTP 404. Explicitly whitelisted Fastify schema-validation, empty/malformed-JSON, and invalid-content-length failures map to `VALIDATION_ERROR` with HTTP 400; unsupported media maps to `VALIDATION_ERROR` with HTTP 415; an oversized body maps to `VALIDATION_ERROR` with HTTP 413. Every other thrown failure maps to `UNKNOWN` with HTTP 500. Once instance-scoped graceful drain begins, a request reaching the server maps to `SERVICE_UNAVAILABLE` with HTTP 503 instead of Fastify's built-in closing payload. Responses use constant safe messages, the server-generated validated request/correlation identifier, no arbitrary metadata, and no field issues. Only the drain response is `retryable: true`; all other API-2 framework responses are `retryable: false`.
+- **Rationale:** Whitelisting known framework failure classes prevents attacker-controlled status codes or messages from crossing the boundary while reusing approved canonical error semantics.
+- **Alternatives:** Fastify's raw default errors, reflecting exception messages or validation arrays, mapping every `statusCode`, inventing new canonical codes, and returning provider errors were rejected.
+- **Consequences:** Operational detail remains internal and safely classified. This decision covers framework-level failures only; operation-specific error mappings and outbound response-validation policy remain blocked under their existing decisions.
+- **Security impact:** Responses expose no exception class, stack, file path, route registry, SQL, provider response, environment value, raw payload, or credential.
+- **Privacy impact:** Error responses and logs do not echo submitted values or merchant/customer details.
+- **Persistence impact:** None; persistence errors do not exist in API-2 and may not be inferred from this mapping.
+- **Compatibility impact:** The response validates against `@kitamo/shared-contracts@0.1.0`; no new error code or field semantics are created.
+- **Affected repositories:** `platform-api`; Shared Contracts is consumed unchanged.
+- **Implementation gate:** Import error schemas only through `src/contracts`; classify only explicit Fastify error evidence; validate every emitted structured error; keep not-found handling separate.
+- **Verification:** Injection tests for not-found, malformed and empty JSON, schema validation, oversized bodies, thrown errors, the draining path, safe messages, exact keys, correlation IDs, and absence of internal details.
+- **Reconsideration conditions:** A later approved operation defines its own error mapping, Shared Contracts changes the error envelope, or measured retry semantics are approved.
+- **Supersedes:** None
+- **Superseded by:** None

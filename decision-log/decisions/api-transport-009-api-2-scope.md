@@ -1,0 +1,24 @@
+# API-TRANSPORT-009 — API-2 is a transport foundation only
+
+- **ID:** API-TRANSPORT-009
+- **Title:** API-2 is a transport foundation only
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 milestone scope, non-goals, and acceptance criteria dated 2026-08-11
+- **Context:** A real HTTP runtime can be mistaken for production readiness even when identity, authorization, operations, persistence, synchronization, audit, privacy, deployment, and consumer contracts are absent.
+- **Decision:** API-2 authorizes only the Node/Fastify transport foundation, local configuration, safe framework errors, redacted operational logging, request injection, explicit startup, and graceful shutdown. It authorizes no production operation, Clerk or other identity provider, authentication, authorization, membership, Supabase, database, migration, persistence, sync implementation, audit persistence, OpenAPI operation, external integration, production configuration, public binding, or deployment. `NODE_ENV=production` fails closed because no production deployment policy is approved.
+- **Rationale:** A narrow milestone proves server mechanics without silently resolving authority boundaries or exposing incomplete behavior.
+- **Alternatives:** Adding placeholder integrations, fake repositories, credential configuration, production defaults, sync scaffolds, or a demonstration endpoint were rejected.
+- **Consequences:** API-3 remains independently gated by authoritative identity, membership, and authorization decisions. API-ARCH-002 and all existing provider, data, sync, audit, privacy, and operation blockers remain unresolved or blocked as recorded.
+- **Security impact:** Production startup and all trusted capabilities deny by default.
+- **Privacy impact:** No production data is collected, retained, transferred, or exposed.
+- **Persistence impact:** Zero database, migration, transaction, RLS, repository, or durable state implementation.
+- **Compatibility impact:** API-1 contract pin and public boundary remain unchanged; no endpoint compatibility is created.
+- **Affected repositories:** `platform-api` only; Shared Contracts, Android, Admin, Customer Mobile, and Website remain unchanged.
+- **Implementation gate:** Architecture, dependency, route, config, and secret checks must prove every listed exclusion and reject production startup.
+- **Verification:** Full API-1 and API-2 verification, clean clone, local-only runtime smoke, zero-route checks, dependency audit, CI, and cross-repository integrity review.
+- **Reconsideration conditions:** A separately authorized milestone closes the specific decision and contract gates for one bounded capability.
+- **Supersedes:** None
+- **Superseded by:** None

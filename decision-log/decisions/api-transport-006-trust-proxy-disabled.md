@@ -1,0 +1,24 @@
+# API-TRANSPORT-006 — Proxy trust remains disabled
+
+- **ID:** API-TRANSPORT-006
+- **Title:** Proxy trust remains disabled
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 trust-proxy default authorization dated 2026-08-11
+- **Context:** No production host, ingress, reverse proxy, trusted hop list, or client-IP policy is approved. Trusting forwarded headers without that topology would let callers influence security-relevant network identity.
+- **Decision:** Configure Fastify with `trustProxy: false`. Platform API does not interpret forwarded client IP, protocol, or host information as trusted authority in API-2.
+- **Rationale:** A fail-closed default is the only defensible choice before proxy boundaries and header sanitization are known.
+- **Alternatives:** Global proxy trust, hop-count assumptions, and permissive forwarded-header parsing were rejected.
+- **Consequences:** Local request network metadata reflects the direct connection only. No authorization, rate limit, audit, or business decision may depend on client IP.
+- **Security impact:** Prevents spoofed forwarded headers from becoming trusted context.
+- **Privacy impact:** Avoids creating an unnecessary client-IP collection and retention policy.
+- **Persistence impact:** None.
+- **Compatibility impact:** Future hosted environments must explicitly configure and test their trusted proxy boundary; API-2 promises no forwarded-header behavior.
+- **Affected repositories:** `platform-api` only.
+- **Implementation gate:** `trustProxy` remains explicitly false and no source consumes forwarded headers as authority.
+- **Verification:** Server-option and architecture tests plus absence of proxy plugins or trusted-header logic.
+- **Reconsideration conditions:** An approved deployment topology identifies exact trusted proxies, header normalization, security ownership, privacy handling, and tests.
+- **Supersedes:** None
+- **Superseded by:** None

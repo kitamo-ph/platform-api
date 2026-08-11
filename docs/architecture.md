@@ -2,20 +2,23 @@
 
 ## Document status
 
-| Item                                 | Status                                                                                |
-| ------------------------------------ | ------------------------------------------------------------------------------------- |
-| API-1 contract-consumer architecture | Complete for the bounded foundation while verification and CI gates remain green      |
-| Framework selection                  | Proposed; approval required                                                           |
-| API-0 evidence foundation            | Complete at `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                                |
-| Git repository bootstrap             | Complete on `main`                                                                    |
-| API-1 Shared Contracts consumption   | `@kitamo/shared-contracts@0.1.0` pinned to `a380f19f2adcf0557b424461f869aa3d0069e176` |
-| HTTP server and routes               | Absent; API-1 remains transport-neutral                                               |
-| Production implementation            | Not authorized                                                                        |
+| Item                                 | Status                                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------- |
+| API-1 contract-consumer architecture | Complete for the bounded foundation while verification and CI gates remain green       |
+| API-2 transport/runtime architecture | Implemented locally; final clean-environment, runtime-smoke, and CI acceptance pending |
+| Framework selection                  | Fastify `5.11.3` approved for HTTP transport only                                      |
+| API-0 evidence foundation            | Complete at `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                                 |
+| Git repository bootstrap             | Complete on `main`                                                                     |
+| API-1 Shared Contracts consumption   | `@kitamo/shared-contracts@0.1.0` pinned to `a380f19f2adcf0557b424461f869aa3d0069e176`  |
+| HTTP server                          | Fastify factory and explicit local runtime entrypoint implemented                      |
+| Production routes                    | Zero; synthetic routes are registered only by tests                                    |
+| Production implementation            | Not authorized                                                                         |
 
-This document preserves the API-0 server proposal and records the implemented
-API-1 contract-consumer boundary. Only the bounded API-1 decisions recorded in
-`decision-log/decisions/` are approved. The future server architecture and
-framework remain proposals.
+This document preserves the API-0 proposal and implemented API-1 contract
+boundary, and records the locally implemented API-2 server foundation. API-2
+approval is bounded to transport mechanics. It does not approve merchant
+operations, identity, authorization, persistence, synchronization, external
+providers, a production runtime, or deployment.
 
 ## Historical API-0 evidence baseline (2026-07-25)
 
@@ -37,7 +40,7 @@ SC-4 and froze `@kitamo/shared-contracts@0.1.0` at commit
 `a380f19f2adcf0557b424461f869aa3d0069e176`, unblocking bounded API-1
 consumption but no production operation.
 
-## Current API-1 architecture
+## Preserved API-1 architecture
 
 API-1 establishes this dependency direction:
 
@@ -92,48 +95,41 @@ Platform API must consume verified public Shared Contracts exports. It must not
 copy canonical schemas, deep-import package internals, infer contracts from
 documentation, or reproduce Owner–Seller Mobile business rules.
 
-## Architectural objective
+## API-2 transport architecture
 
-The recommended shape is one modular service with explicit internal
-boundaries. A single deployable keeps the initial operational surface small,
-while ports and adapters keep future infrastructure replaceable. This is a
-proposal, not authorization to create routes or production behavior.
+API-2 implements a small server foundation with explicit dependency direction:
 
 ```text
-composition root
-├── transport
-│   ├── routes
-│   ├── request context
-│   └── approved contract validation
-├── application
-│   ├── application services
-│   └── policy orchestration
-├── ports
-│   ├── identity and authorization
-│   ├── idempotency and persistence
-│   ├── audit
-│   └── external integrations
-└── adapters
-    ├── Shared Contracts boundary
-    ├── persistence
-    ├── observability
-    └── external systems
+explicit runtime entrypoint
+    -> validated immutable configuration
+    -> composition/create-app
+        -> transport/server
+            -> logging, request ID, safe framework errors
+            -> contracts boundary
+                -> @kitamo/shared-contracts public exports
+
+future application services
+    -> framework-independent policies and ports
+        <- future infrastructure adapters
 ```
 
-Dependencies point inward. Transport and infrastructure adapters may call the
-application layer through declared interfaces; application code must not
-depend on HTTP framework objects, database clients, or vendor SDKs.
+`src/runtime/start.ts` is the only source location authorized to bind a socket.
+`src/composition/create-app.ts` verifies Shared Contracts runtime identity and
+constructs the server. `src/transport/` owns Fastify-specific behavior.
+`src/contracts/` remains Fastify-independent. Empty application, policy, port,
+and infrastructure layers are not fabricated before an approved operation
+needs them.
 
 ## Framework evaluation
 
-No framework is approved. Selection belongs in an approved Platform API
-decision record after the runtime and deployment target are known. The
-evaluations below record every required criterion without treating a feature
-claim as approval.
+API-2 authorizes resolution of the transport framework independently of the
+production hosting target. Framework approval does not approve a listener in
+production or any operation.
 
 ### Fastify
 
-- **Candidate:** Fastify.
+- **Selected version:** Fastify `5.11.3`, exactly pinned by the manifest and
+  lockfile.
 - **Runtime model:** Long-lived Node.js HTTP service; serverless suitability
   depends on the eventual adapter and host.
 - **Request validation:** Strong schema-hook model; it must invoke verified
@@ -142,23 +138,24 @@ claim as approval.
   fail safely and avoid a parallel schema source.
 - **OpenAPI support:** Mature ecosystem integration, contingent on deriving
   documentation from the same approved contracts and operation records.
-- **Structured logging:** Built-in structured-logger integration is a good fit;
-  redaction and field allowlists still require approval.
+- **Structured logging:** Built-in structured logging is configured with
+  explicit redaction, narrow serializers, and disabled default request logging.
 - **Plugin or middleware security:** Encapsulation is useful, but every plugin,
   parser, limit, hook order, and trust boundary requires review.
-- **Testability:** Injection-based route tests and isolated plugins fit the
-  proposed layers.
+- **Testability:** Injection, readiness, error, payload, logging, startup, and
+  shutdown behavior can be tested without binding a listener.
 - **Cold-start behavior:** Generally small for a Node framework; actual startup
   must be measured with approved plugins and contracts.
 - **Deployment compatibility:** Good for conventional Node processes;
   serverless/edge compatibility cannot be assumed before target selection.
-- **Maintenance burden:** Moderate and lower than assembling lifecycle,
-  validation, logging, and test conventions from primitives.
-- **Shared Contracts compatibility:** The transport-neutral API-1 adapter proves
-  public Zod-backed runtime validation; Fastify integration remains untested and
-  unapproved.
-- **Recommendation:** Preferred candidate for the smallest modular service.
-- **Approval status:** Proposed.
+- **Node/tooling compatibility:** Compatible with Node `>=20.19.4`, CI Node
+  `20.20.0`, strict TypeScript 5.9, ESM, Vitest, and the existing Shared
+  Contracts preparation flow.
+- **Shared Contracts compatibility:** Transport imports the unchanged Platform
+  API adapter rather than package internals or copied schemas.
+- **Maintenance burden:** One runtime dependency and no speculative plugin
+  packages; lifecycle, logging, error hooks, and injection are framework-native.
+- **Approval status:** **Approved for Platform API HTTP transport only.**
 
 ### Hono
 
@@ -214,50 +211,56 @@ claim as approval.
 - **Recommendation:** Viable fallback, not the preferred foundation.
 - **Approval status:** Not approved.
 
-Fastify is recommended because it best supports a narrow transport layer and
-the required lifecycle concerns without an enterprise framework. This
-recommendation remains **Proposed** and must not be encoded as an Approved
-decision.
+Hono and Express remain evaluated alternatives, not selected frameworks. No
+material Fastify incompatibility was found for the bounded API-2 foundation, so
+API-2 approves Fastify without authorizing another framework, an operation, or
+deployment.
 
-## Proposed stack
+## API-2 stack
 
-| Concern            | Proposal                                                                     | Current status                                                                  |
-| ------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Runtime            | Node `>=20.19.4`, with Node `20.20.0` in CI                                  | Approved for the API-1 tooling foundation; production runtime target unresolved |
-| Language           | TypeScript 5.9 with strict checking                                          | Approved for API-1                                                              |
-| HTTP framework     | Fastify                                                                      | Proposed                                                                        |
-| Package manager    | npm with a committed lockfile                                                | Approved for API-1                                                              |
-| Runtime validation | Shared Contracts' exported Zod runtime schemas                               | Implemented at the contract adapter; no local canonical schemas                 |
-| Linting            | ESLint 9 flat configuration                                                  | Implemented for API-1                                                           |
-| Formatting         | Prettier 3                                                                   | Implemented for API-1                                                           |
-| Shared Contracts   | Exact source archive for `@kitamo/shared-contracts@0.1.0` at accepted commit | Implemented and pinned; no unpinned branch or `latest`                          |
-| Validation         | Narrow parsing and fail-closed version enforcement at the contract boundary  | Implemented for API-1 primitives; no request/response operation schemas         |
-| Testing            | Vitest contract-consumer, compatibility, fixture, and architecture tests     | Implemented for API-1                                                           |
-| Logging            | Structured server logs with explicit redaction and correlation support       | Proposed                                                                        |
-| OpenAPI            | Derive from approved operation records and approved public contracts         | Proposed; no operations approved                                                |
-| Persistence        | Access only through application ports                                        | Technology unresolved                                                           |
-| Deployment         | No target selected                                                           | Deferred pending approval                                                       |
+| Concern            | Selection                                                                    | Current status                                                             |
+| ------------------ | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Runtime            | Node `>=20.19.4`, with Node `20.20.0` in CI                                  | Local process foundation implemented; production runtime target unresolved |
+| Language           | TypeScript 5.9 with strict checking                                          | Approved for API-1                                                         |
+| HTTP framework     | Fastify `5.11.3`                                                             | Approved for transport only                                                |
+| Package manager    | npm with a committed lockfile                                                | Approved for API-1                                                         |
+| Runtime validation | Shared Contracts' exported Zod runtime schemas                               | Implemented at the contract adapter; no local canonical schemas            |
+| Linting            | ESLint 9 flat configuration                                                  | Implemented for API-1                                                      |
+| Formatting         | Prettier 3                                                                   | Implemented for API-1                                                      |
+| Shared Contracts   | Exact source archive for `@kitamo/shared-contracts@0.1.0` at accepted commit | Implemented and pinned; no unpinned branch or `latest`                     |
+| Validation         | Narrow parsing and fail-closed version enforcement at the contract boundary  | Implemented for API-1 primitives; no request/response operation schemas    |
+| Testing            | Vitest contract, transport/lifecycle, compatibility, and architecture tests  | Implemented locally; final acceptance pending                              |
+| Logging            | Fastify structured logs with narrow serializers and credential redaction     | Implemented for the API-2 transport; provider/retention unresolved         |
+| OpenAPI            | Derive from approved operation records and approved public contracts         | Not installed; no operations approved                                      |
+| Persistence        | Access only through application ports                                        | Technology unresolved                                                      |
+| Deployment         | No target selected                                                           | Deferred pending approval                                                  |
 
-This table is an evaluation baseline. It authorizes no installation, package
-publication, endpoint, database, deployment, or integration.
+This table authorizes the named transport foundation only. It authorizes no
+package publication, endpoint, database, deployment, provider, or integration.
 
 ## Component responsibilities
 
 ### Application composition
 
-One composition root should construct the server, application services, ports,
-and adapters. It should be the only location that selects concrete
-infrastructure. Startup must validate configuration before opening a listener
-and must fail closed when a required security or contract dependency is
-unavailable.
+`createApp` is the composition root. It checks the accepted Shared Contracts
+runtime identity before constructing Fastify. It neither loads process-global
+configuration nor starts a listener. Startup validates configuration before
+calling it and fails closed when configuration or the contract dependency is
+invalid.
 
-The composition root must not contain merchant business rules. Until the
-Shared Contracts and operation gates are satisfied, it must not expose
-production-facing operations.
+The composition root contains no merchant business rule and registers no
+production-facing operation.
 
 ### Route boundary
 
-Routes are transport adapters. A route may:
+Production source registers **zero routes**. Synthetic `/__test__/ok`,
+`/__test__/throw`, `/__test__/payload`, `/__test__/proxy`,
+`/__test__/headers`, `/__test__/redaction`, and `/__test__/log-exception`
+routes are registered only from transport tests against isolated server
+instances. They are not exported, registered by the composition root, or
+present in the runtime route surface.
+
+A future approved route will be a transport adapter and may:
 
 1. establish an approved request context;
 2. validate the request against an approved public request contract;
@@ -271,27 +274,29 @@ A compiling route is not evidence that an operation is approved.
 
 ### Request context
 
-The request context should carry only reviewed operational facts needed by the
-approved operation, such as a correlation identifier, resolved contract
-version, authenticated principal reference, authorized membership or role
-references, canonical stall scope, and request timing.
+API-2 request context contains only Fastify's bounded internal request ID and
+framework timing. `requestIdHeader=false` means untrusted inbound headers cannot
+select it. The generator produces `req_` plus a random UUID, bounded to 40
+characters, and the response exposes it as `x-request-id` for local operational
+tracing.
 
-Each field requires a verified source and lifecycle. Headers or client claims
-must not be treated as resolved identity, authorization, membership, role, or
-stall scope. Raw credentials and unnecessary personal data must not be copied
-into context or logs.
+The internal request ID is structurally validated through `CorrelationIdSchema`
+when emitted in the framework error envelope, but this does not establish the
+final cross-system correlation-generation policy. It is not a credential,
+principal, merchant ID, membership, role, ownership fact, or authorized scope.
+Future headers and client claims remain untrusted until separately approved.
 
 ### Contract adapters
 
 A narrow adapter boundary under `src/contracts/` is the only place where
 Platform API imports Shared Contracts. It:
 
-- use documented public import paths only;
-- pin and report the consumed package version or approved distribution commit;
-- expose no contract that is absent from the public export;
-- preserve approved structured errors and field-level violations;
+- uses documented public import paths only;
+- pins and reports the consumed package version or approved distribution commit;
+- exposes no contract that is absent from the public export;
+- preserves approved structured errors and field-level violations;
 - exposes no Android compatibility mapping because none is public; and
-- test runtime and type-level consumer suitability.
+- tests runtime and type-level consumer suitability.
 
 The Android `branch` to canonical `stall` mapping must remain blocked until a
 verified Shared Contracts compatibility export exists. Platform API must not
@@ -372,30 +377,47 @@ The limited `AuditEventSchema` is consumable for contract conformance. Audit
 production still depends on approved decisions for authoritative actor/role
 resolution, event classification, persistence, retention, access, privacy, and
 failure behavior. Operational logs are not a substitute for an audit record,
-and API-1 emits no production audit event.
+and API-2 emits no production audit event.
 
 ### Observability
 
-The proposed baseline is structured, redacted logs; correlation propagation;
-service health signals; request duration and outcome metrics; and
-operation-level traces where approved. Observability must use stable operation
-identifiers and must not expose credentials, raw tokens, unnecessary personal
-data, private architecture, or merchant-sensitive payloads.
+API-2 uses Fastify's structured logger with default request logging disabled.
+The request serializer emits only internal ID and method, the response serializer
+only status, and the error serializer redacts message and stack. Logs record
+bounded lifecycle events, status, and elapsed time without URL, query, headers,
+request body, response body, support diagnostics, financial data, or merchant
+payloads.
 
-Exact tooling and retention are unresolved. A liveness signal must not imply
-that dependencies, contracts, or production readiness have been verified.
+Redaction covers authorization, cookie, set-cookie, proxy-authorization,
+`x-api-key`, password, secret, token, API-key, and service-role-key paths,
+including nested request/response header forms. Production provider, sampling,
+access, retention, region, metrics, and traces remain unresolved. Operational
+logs are not canonical audit, and no liveness endpoint exists.
 
 ### Errors
 
-Public errors for a future approved operation must use the verified Shared
-Contracts `StructuredErrorSchema` and `FieldIssueSchema`. Internal errors
-should be classified and mapped at
-the transport boundary without leaking stack traces, infrastructure details,
-or sensitive values.
+API-2's central Fastify error boundary validates its bounded response through
+Shared Contracts `StructuredErrorSchema`. Unknown routes produce `404` /
+`NOT_FOUND` / `Route not found.`. Whitelisted `FST_ERR_VALIDATION`,
+`FST_ERR_CTP_EMPTY_JSON_BODY`, `FST_ERR_CTP_INVALID_JSON_BODY`, and
+`FST_ERR_CTP_INVALID_CONTENT_LENGTH` failures produce `400` /
+`VALIDATION_ERROR` / `Request validation failed.`;
+`FST_ERR_CTP_INVALID_MEDIA_TYPE` produces `415` / `VALIDATION_ERROR` with the
+same safe message; `FST_ERR_CTP_BODY_TOO_LARGE` for bodies over 65,536 bytes
+produces `413` / `VALIDATION_ERROR` /
+`Request body exceeds the permitted size.`; and unhandled failures produce
+`500` / `UNKNOWN` / `Internal server error.`. Once graceful drain begins,
+requests that reach the instance produce `503` / `SERVICE_UNAVAILABLE` /
+`Service temporarily unavailable.` through the same validated boundary instead
+of Fastify's built-in closing payload.
 
-API-1 verifies those shared schemas but defines no competing envelope and no
-HTTP status mapping. Fail-closed package/bootstrap errors remain internal
-operational failures.
+Responses contain only code, bounded safe message, the validated internal
+request ID as `correlation_id`, and no `field_issues`. The drain response alone
+is `retryable: true`; every other API-2 framework response is `retryable:
+false`. They expose no exception class, framework validation details, stack,
+file path, SQL/provider response,
+environment value, original payload, route registry, or arbitrary metadata.
+Operation-specific mappings and response contracts remain blocked.
 
 ### OpenAPI
 
@@ -410,7 +432,7 @@ constitute operation approval.
 
 ### Testing
 
-The proposed test layers are:
+The implemented and future test layers are:
 
 - architecture tests for dependency direction and prohibited deep imports;
 - contract-consumer tests for public imports and runtime validation;
@@ -421,35 +443,49 @@ The proposed test layers are:
 - shutdown and configuration-failure tests; and
 - compatibility tests backed by approved Shared Contracts fixtures.
 
-Tests may demonstrate implementation behavior, but they cannot supply missing
-product semantics or approval. API-1 tests cover the accepted public primitive
-surface; merchant-domain and production-operation tests remain blocked because
-their contracts and operation records do not exist.
+API-2 adds construction/readiness, test-only injection, success/exception,
+not-found, malformed JSON, unsupported content, oversized body, request-ID,
+logging redaction, import-without-listen, configuration failure, startup, and
+idempotent shutdown coverage. Tests may demonstrate implementation behavior,
+but they cannot supply missing product semantics or approval. Merchant-domain
+and production-operation tests remain blocked because their contracts and
+operation records do not exist.
 
 ### Configuration
 
-Configuration should be typed, validated once at startup, and passed into the
-composition root. Required production values must not have insecure defaults.
-Secrets must come from an approved secret mechanism, remain out of source and
-logs, and never use real values in this milestone.
+`loadRuntimeConfig` validates the process environment once and returns an
+`Object.freeze`d value:
 
-Environment variable names, deployment profiles, credential sources, and
-rotation processes remain unresolved and should not be invented in the
-foundation.
+| Variable    | Accepted API-2 value                                            | Default     |
+| ----------- | --------------------------------------------------------------- | ----------- |
+| `NODE_ENV`  | `development` or `test`; `production` and unknown values reject | development |
+| `HOST`      | literal `127.0.0.1` or `::1`; DNS names reject                  | `127.0.0.1` |
+| `PORT`      | decimal integer `1` through `65535`                             | `3000`      |
+| `LOG_LEVEL` | `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent` | `info`      |
+
+API-2 has no credential configuration. `NODE_ENV=production` fails with a safe
+configuration error before server construction or binding because no
+production deployment policy is approved. Production profiles, credential
+sources, secret delivery, and rotation remain unresolved.
 
 ### Graceful shutdown
 
-On a termination signal, the future service should:
+`startRuntime` loads configuration, verifies Shared Contracts through the
+composition root, constructs Fastify, awaits readiness, registers `SIGTERM` and
+`SIGINT`, and only then calls the single authorized `listen()` with the validated
+loopback host and port. Any failure disposes signal handlers, closes the server,
+and is rethrown. Direct runtime startup writes exactly
+`{"level":"error","event":"runtime.startup_failed"}` to standard error and
+sets exit code `1`; it exposes no rejected value or exception detail.
 
-1. stop accepting new requests;
-2. allow bounded in-flight work to finish;
-3. stop background work and outbound activity;
-4. flush approved audit and observability buffers;
-5. close external and persistence adapters; and
-6. exit non-zero if shutdown cannot complete safely.
-
-Timeouts, orchestration signals, and readiness behavior must match the
-eventually approved deployment target. No target is currently selected.
+The shutdown controller is instance-scoped and idempotent. On explicit shutdown
+or either signal it first marks that instance as draining and then calls
+`server.close()`. Already admitted work follows Fastify's close semantics;
+requests that reach the draining instance receive the bounded shared `503`
+response. The controller then removes signal handlers. A shutdown failure sets
+exit code `1`. No DB pool, queue, worker, audit buffer, global resource registry,
+or external client is invented. Deployment-specific timeouts and orchestration
+remain unresolved.
 
 ## Security posture
 
@@ -463,12 +499,21 @@ The architecture is fail-closed:
 - sensitive configuration is mandatory rather than silently defaulted; and
 - no production capability is exposed merely because infrastructure starts.
 
-CORS, rate limiting, support-report retention, operational logging, and
-privacy classifications require explicit decisions before production use.
+The server uses a 65,536-byte transport body limit, normal JSON parsing only,
+removes Fastify's `text/plain` parser, rejects prototype/constructor poisoning,
+disallows error-handler override, removes `server` and `x-powered-by` response
+headers, ignores inbound request-ID selection, and sets `trustProxy=false`.
+CORS and rate limiting are not installed. Multipart, XML, form-data, binary
+uploads, cookies, sessions, OpenAPI, and authentication parsers/plugins are
+absent.
+
+Support-report retention, production logging/provider policy, proxy topology,
+CORS, rate limiting, and privacy classifications still require explicit
+decisions before production use.
 
 ## Current non-goals
 
-This foundation does not authorize:
+The API-2 foundation does not authorize:
 
 - production endpoints or payloads;
 - recreation or movement of Owner–Seller Mobile business logic;
@@ -478,24 +523,30 @@ This foundation does not authorize:
 - production idempotency, synchronization, audit, or persistence;
 - database selection, schemas, migrations, or transaction behavior;
 - external service integrations;
+- a production host, public bind, trusted proxy, CORS, or rate-limit policy;
 - deployment, npm publication, or production migrations;
 - real credentials or production data; or
 - promises to Admin, Customer Mobile, Website, or other consumers.
 
 ## Verification gates
 
-API-1 acceptance requires:
+API-2 acceptance requires:
 
-1. exact source archive, commit, package version, export map, and lock integrity
-   verification;
-2. reproducible `npm ci` plus `npm run verify` in a clean environment;
-3. public-import, declaration, positive/negative fixture, unsupported-version,
-   deep-import, architecture, secret, and dependency-audit checks;
-4. no copied schema, server, route, framework, persistence, authentication,
-   cloud, production sync, or deployment artifact; and
-5. unchanged Shared Contracts, Android, and Admin repositories.
+1. preservation of the exact API-1 archive, commit, package version, export map,
+   lock integrity, public-import, and fail-closed version gates;
+2. exact Fastify pin and passing construction, injection, error, logging,
+   configuration, listener, startup, and shutdown tests;
+3. architecture proof that Fastify remains in approved layers, only the runtime
+   entrypoint listens, and production source registers zero routes;
+4. reproducible `npm ci` plus `npm run verify` in a clean environment and a
+   loopback-only runtime smoke with no process left running;
+5. secret and dependency-audit gates, no auth/database/cloud/sync/deployment
+   artifact, and unchanged Shared Contracts, Android, and Admin repositories;
+   and
+6. green final GitHub Actions evidence.
 
-After API-1, each future operation still requires a complete record in
+Until those final gates pass, API-2 is implemented locally but not complete.
+After API-2, each future operation still requires a complete record in
 `docs/endpoint-governance.md`, explicit approval, and closure of its security,
 privacy, persistence, audit, transport, reliability, and compatibility
-blockers. The proposed server architecture is not approved by API-1.
+blockers. The approved transport architecture is not operation approval.

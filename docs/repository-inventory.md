@@ -2,45 +2,52 @@
 
 ## Record status
 
-| Item                       | Value                                                                                                      |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Current review date        | 2026-08-11 (Asia/Manila)                                                                                   |
-| Historical inspection date | 2026-07-25 (Asia/Manila)                                                                                   |
-| Milestone                  | API-1 Shared Contracts consumption foundation                                                              |
-| API-0 status               | Complete; accepted baseline commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                              |
-| API-1 status               | Complete for the bounded consumer foundation while all local, clean-environment, and CI gates remain green |
-| Shared Contracts authority | `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`                             |
-| Production status          | No production implementation exists or is authorized                                                       |
+| Item                       | Value                                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------- |
+| Current review date        | 2026-08-11 (Asia/Manila)                                                                            |
+| Historical inspection date | 2026-07-25 (Asia/Manila)                                                                            |
+| Milestone                  | API-2 server runtime and transport foundation                                                       |
+| API-0 status               | Complete; accepted baseline commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                       |
+| API-1 status               | Complete for the bounded Shared Contracts consumer foundation                                       |
+| API-2 status               | Implemented locally; final clean-environment, runtime-smoke, publication, and CI acceptance pending |
+| Shared Contracts authority | `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`                      |
+| Framework                  | Fastify `5.11.3`, approved for transport only                                                       |
+| Production status          | Zero production operations/routes; deployment and production startup are not authorized             |
 
 This inventory records the repository state found before API-0 files were
 created. The Platform API directory was empty and was not a Git repository at
 that inspection point. Documentation and API-1 implementation created later do
 not change that dated baseline finding.
 
-## Current API-1 inventory
+## Current API-1/API-2 inventory
 
-| Field                   | Current evidence                                                                                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository              | `kitamo-ph/platform-api` at `/Users/rovs/Documents/KitaMo-ph/platform-api`                                                                                       |
-| Remote and branch       | `origin` is `https://github.com/kitamo-ph/platform-api`; `main` tracks `origin/main`                                                                             |
-| Pre-mutation baseline   | Local `HEAD`, `origin/main`, and remote `refs/heads/main` all equaled `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`; tracked and untracked worktree state was clean |
-| Local handoff           | `.kitamo/STATUS.md` remains ignored by the exact `.kitamo/` rule and is not a durable decision source                                                            |
-| Package manager         | npm with a deterministic `package-lock.json`; Platform API is private and is not published                                                                       |
-| Runtime/tooling         | Node `>=20.19.4`; CI Node `20.20.0`; strict TypeScript 5.9; ESLint 9; Prettier 3; Vitest                                                                         |
-| Source                  | A transport-neutral Shared Contracts boundary under `src/contracts/`; no listener, server, route, handler, or OpenAPI operation                                  |
-| Tests                   | Contract conformance, positive/negative fixtures, version rejection, package/public-path, architecture, and pin-failure coverage                                 |
-| CI                      | GitHub Actions installs with `npm ci` and runs the complete verification aggregate; no deployment                                                                |
-| Shared Contracts source | `https://github.com/kitamo-ph/shared-contracts.git`                                                                                                              |
-| Shared Contracts pin    | Commit `a380f19f2adcf0557b424461f869aa3d0069e176`; package `@kitamo/shared-contracts`; version `0.1.0`                                                           |
-| Acquisition             | Exact GitHub source archive recorded in manifest, lockfile, and `config/shared-contracts-pin.json`; installed package is built locally and verified before use   |
-| Integrity               | Lockfile SHA-512, exact archive URL/commit, package name/version, export keys, runtime metadata, public imports, and prohibited paths are checked fail closed    |
-| External services       | None; no Clerk, Supabase, database, queue, webhook, payment, or production credential                                                                            |
-| Production behavior     | None; no endpoint, persistence, authentication, authorization, production sync, audit persistence, or deployment                                                 |
+| Field                       | Current evidence                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository                  | `kitamo-ph/platform-api` at `/Users/rovs/Documents/KitaMo-ph/platform-api`                                                                                            |
+| Remote and branch           | `origin` is `https://github.com/kitamo-ph/platform-api`; `main` tracks `origin/main`                                                                                  |
+| API-2 pre-mutation baseline | Local `HEAD`, `origin/main`, and live remote `refs/heads/main` all equaled `ef7c36a9585d0d171d48a94fb4560a1e3a69da28`; tracked and untracked worktree state was clean |
+| Local handoff               | `.kitamo/STATUS.md` remains ignored by the exact `.kitamo/` rule and is not a durable decision source                                                                 |
+| Package manager             | npm with a deterministic `package-lock.json`; Platform API is private and is not published                                                                            |
+| Runtime/tooling             | Node `>=20.19.4`; CI Node `20.20.0`; strict TypeScript 5.9; ESLint 9; Prettier 3; Vitest                                                                              |
+| Source                      | Preserved `src/contracts/` boundary plus config, transport/server, composition, and explicit runtime/startup-shutdown layers; production route registration is empty  |
+| Framework                   | Exact Fastify `5.11.3`; no speculative Fastify plugins                                                                                                                |
+| Configuration               | Typed, validated once, immutable; non-secret runtime fields only; production startup fails closed because deployment policy is unresolved                             |
+| Transport defaults          | Structured redacted logs, bounded request IDs/body size, safe shared error semantics, normal JSON only, `trustProxy=false`, no CORS or rate limiting                  |
+| Tests                       | Preserved API-1 contract coverage plus server construction/readiness, injection, error, payload, logging, request-ID, listener, startup, and shutdown coverage        |
+| CI                          | GitHub Actions installs with `npm ci` and runs the complete verification aggregate; no deployment                                                                     |
+| Shared Contracts source     | `https://github.com/kitamo-ph/shared-contracts.git`                                                                                                                   |
+| Shared Contracts pin        | Commit `a380f19f2adcf0557b424461f869aa3d0069e176`; package `@kitamo/shared-contracts`; version `0.1.0`                                                                |
+| Acquisition                 | Exact GitHub source archive recorded in manifest, lockfile, and `config/shared-contracts-pin.json`; installed package is built locally and verified before use        |
+| Integrity                   | Lockfile SHA-512, exact archive URL/commit, package name/version, export keys, runtime metadata, public imports, and prohibited paths are checked fail closed         |
+| External services           | None; no Clerk, Supabase, database, queue, webhook, payment, or production credential                                                                                 |
+| Route surface               | Zero production/merchant routes; synthetic `__test__` routes are owned and registered only by transport tests                                                         |
+| Production behavior         | None; no operation, persistence, authentication, authorization, production sync, audit persistence, production startup, or deployment                                 |
 
 The current package foundation resolves the API-0 dependency blocker only for
 the accepted public v0.1 surface. It does not resolve merchant-domain,
 identity, authorization, persistence, sync-protocol, audit-policy, privacy,
-transport, or deployment decisions.
+production runtime, consumer-operation, or deployment decisions. API-2 resolves
+only the bounded local transport foundation.
 
 ## Historical evidence notation
 
@@ -55,7 +62,7 @@ transport, or deployment decisions.
 
 No item in the historical API-0 inventory was **Approved** unless explicit
 approval evidence was identified; none was found during that inspection.
-Current API-1 approvals are recorded separately under
+Current API-1/API-2 approvals are recorded separately under
 `decision-log/decisions/`.
 
 ## Historical API-0 repository inventory (2026-07-25)

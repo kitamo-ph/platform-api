@@ -1,0 +1,24 @@
+# API-TRANSPORT-008 — Redacted structured operational logging
+
+- **ID:** API-TRANSPORT-008
+- **Title:** Redacted structured operational logging
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 structured logging, redaction, request-identifier, and audit-boundary authorization dated 2026-08-11
+- **Context:** The transport needs bounded local operational evidence before a production log provider, retention policy, or cross-system correlation-generation policy exists. Fastify supplies structured logger integration and a request ID hook.
+- **Decision:** Emit structured operational logs using allowlisted event fields. Do not dump request or response bodies or headers by default. Redact `authorization`, `cookie`, `set-cookie`, `proxy-authorization`, and `x-api-key` wherever framework log objects may contain them. Generate a bounded server-owned request identifier from randomness, validate it through the Platform API Shared Contracts boundary before using it as a structured-error correlation identifier, return it as safe response context, and never derive it from credentials or merchant identifiers. Operational logs are not canonical audit evidence.
+- **Rationale:** Minimal structured events support lifecycle diagnosis while reducing credential and payload disclosure. Server-owned IDs avoid trusting arbitrary client headers.
+- **Alternatives:** Raw console output, request/body dumps, raw exception serialization, client-controlled request IDs, merchant IDs as trace IDs, and relabeling logs as audit were rejected.
+- **Consequences:** `API-RELIABILITY-001` remains Proposed for production sink, retention, access, sampling, incident ownership, and cross-system propagation. The Shared Contracts identifier controls representation, not generation policy.
+- **Security impact:** Credential headers and arbitrary exception details are not emitted; logs use constant safe failure classifications.
+- **Privacy impact:** Body, diagnostic, financial, customer, merchant, and unnecessary network data are excluded by default.
+- **Persistence impact:** No log sink or audit store is selected.
+- **Compatibility impact:** Internal request IDs are operational context, not a consumer identity, idempotency key, or final cross-system correlation promise.
+- **Affected repositories:** `platform-api` only; Shared Contracts is consumed unchanged.
+- **Implementation gate:** Centralize logger configuration and request-ID generation; disable raw automatic request logging when it exceeds the allowlist; never accept a credential or domain identifier as tracing authority.
+- **Verification:** Captured-log tests with synthetic secrets, response request-ID schema checks, uniqueness/bounds tests, source review for body logging, and the repository secret scan.
+- **Reconsideration conditions:** Approval of a production log sink, retention/access policy, tracing system, correlation propagation policy, or canonical audit implementation.
+- **Supersedes:** None
+- **Superseded by:** None

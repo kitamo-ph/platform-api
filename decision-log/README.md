@@ -104,3 +104,26 @@ link. Retain both records.
 and remains blocked for production operations. `API-CONTRACT-004` retains its
 existing meaning, production application-version policy, and remains blocked.
 Their IDs are not repurposed by API-1.
+
+## API-2 approved decisions
+
+| ID                  | Decision                                         | Scope                                                         |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------- |
+| `API-ARCH-001`      | Fastify `5.11.3` is the HTTP transport framework | Transport foundation only; no operation or deployment         |
+| `API-TRANSPORT-001` | Server factory and explicit runtime entrypoint   | Imports never bind a listener                                 |
+| `API-TRANSPORT-002` | Framework-independent inward layers              | Fastify stays outside application, policies, ports, contracts |
+| `API-TRANSPORT-003` | Empty production route surface                   | No merchant or production operation                           |
+| `API-TRANSPORT-004` | Test-only synthetic routes                       | Tests may register routes that production never imports       |
+| `API-TRANSPORT-005` | Safe framework error boundary                    | Approved Shared Contracts errors without internal disclosure  |
+| `API-TRANSPORT-006` | Proxy trust disabled                             | Deployment topology must be approved before proxy trust       |
+| `API-TRANSPORT-007` | CORS and rate limits remain deferred             | No policy or plugin without approved consumers/topology       |
+| `API-TRANSPORT-008` | Redacted structured operational logging          | Internal request tracing only; not canonical audit            |
+| `API-TRANSPORT-009` | API-2 is transport-only                          | No identity, persistence, sync, operation, or deployment      |
+
+`API-ARCH-003` remains an accurate, approved record of API-1's historical
+transport-neutral scope and is not superseded by API-2. `API-ARCH-002` remains
+unresolved for the production runtime and deployment target. Production log
+sinks and retention remain under `API-RELIABILITY-001`; CORS and rate-limit
+policy remain under `API-SECURITY-001` and `API-SECURITY-002`. API-2 approves
+safe absence and bounded local transport mechanisms, not those future
+production policies.

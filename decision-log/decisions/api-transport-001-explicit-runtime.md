@@ -1,0 +1,24 @@
+# API-TRANSPORT-001 — Server factory and explicit runtime entrypoint
+
+- **ID:** API-TRANSPORT-001
+- **Title:** Server factory and explicit runtime entrypoint
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 server-factory, startup, listener-safety, and shutdown authorization dated 2026-08-11
+- **Context:** A reusable server must support injection tests and composition without opening a socket. Only an explicit runtime command may bind, and production startup is unsupported until deployment policy is approved.
+- **Decision:** Construct Fastify through a side-effect-free server factory. The composition root supplies validated immutable configuration. A guarded runtime entrypoint alone may prepare the server and call `listen`; importing any Platform API module never binds a listener. Runtime configuration, Shared Contracts foundation checks, construction, readiness, and binding occur in that order.
+- **Rationale:** Separating construction from binding makes imports deterministic, permits injection without a network port, and ensures every startup prerequisite fails before exposure.
+- **Alternatives:** Binding inside the server module, starting on package import, or hiding a listener inside tests or the composition root were rejected.
+- **Consequences:** Startup failures emit only a bounded operational event, close any constructed server, and set a non-zero exit status. Graceful shutdown marks only the current server instance as draining before close; no global lifecycle registry is introduced. Local binding remains loopback-only; production binding remains unavailable.
+- **Security impact:** Prevents accidental network exposure and fails closed before listening when configuration or initialization is invalid.
+- **Privacy impact:** Startup logs contain no environment values, credentials, request data, or merchant data.
+- **Persistence impact:** None. Future resources may be composed later but are not invented by API-2.
+- **Compatibility impact:** Consumers may import and test the factory without acquiring a network dependency or endpoint promise.
+- **Affected repositories:** `platform-api` only.
+- **Implementation gate:** Exactly one approved production source location may call `listen`; the entrypoint must be main-module guarded; production configuration must fail before construction or binding.
+- **Verification:** Import-safety tests, startup-order and failure tests, listener-location architecture scans, loopback runtime smoke, graceful close tests, and process-leak checks.
+- **Reconsideration conditions:** An approved deployment target requires a different process model or lifecycle adapter.
+- **Supersedes:** None
+- **Superseded by:** None

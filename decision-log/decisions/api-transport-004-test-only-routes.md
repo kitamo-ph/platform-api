@@ -1,0 +1,24 @@
+# API-TRANSPORT-004 — Test-only synthetic routes
+
+- **ID:** API-TRANSPORT-004
+- **Title:** Test-only synthetic routes
+- **Status:** Approved
+- **Date:** 2026-08-11
+- **Owners:** Platform API
+- **Required approvers:** Platform API milestone owner
+- **Approval evidence:** Explicit API-2 test-only route authorization and production-route prohibition dated 2026-08-11
+- **Context:** Fastify injection, parser limits, error mapping, logging, and lifecycle need executable request paths even though no production operation is approved.
+- **Decision:** Tests may register synthetic `__test__` routes directly on a test-created server instance. Those registrations live under `tests/`, use fictional values, are not exported, are never imported or registered by production source, and express no merchant workflow or compatibility promise.
+- **Rationale:** Test-local routes exercise the framework without manufacturing a production operation or contaminating the composition root.
+- **Alternatives:** A production health route, exported test plugin, hidden runtime route, or merchant-shaped fixture route were rejected.
+- **Consequences:** Test route strings and handlers are disposable verification mechanisms only and must not appear in runtime registration or documentation as available operations.
+- **Security impact:** Test routes cannot become a production bypass or unauthenticated capability.
+- **Privacy impact:** Only synthetic values may be used; no production or merchant data is accepted.
+- **Persistence impact:** Test routes use no persistence or external integration.
+- **Compatibility impact:** Test paths are not a supported interface and carry no backward-compatibility obligation.
+- **Affected repositories:** `platform-api` only.
+- **Implementation gate:** Test route registration is confined to test source; production build inputs and runtime imports exclude it.
+- **Verification:** Architecture scans for `__test__` strings and route registration in production source, build-input review, and injection tests that register routes locally.
+- **Reconsideration conditions:** None; future production test or diagnostic operations require normal operation governance and cannot rely on this decision.
+- **Supersedes:** None
+- **Superseded by:** None
