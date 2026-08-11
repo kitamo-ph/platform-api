@@ -2,15 +2,15 @@
 
 ## Record status
 
-| Item                       | Value                                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| Current review date        | 2026-08-11 (Asia/Manila)                                                                         |
-| Historical inspection date | 2026-07-25 (Asia/Manila)                                                                         |
-| Milestone                  | API-1 Shared Contracts consumption foundation                                                    |
-| API-0 status               | Complete; accepted baseline commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                    |
-| API-1 status               | Bounded consumer foundation implemented; final acceptance requires all verification and CI gates |
-| Shared Contracts authority | `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`                   |
-| Production status          | No production implementation exists or is authorized                                             |
+| Item                       | Value                                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Current review date        | 2026-08-11 (Asia/Manila)                                                                                   |
+| Historical inspection date | 2026-07-25 (Asia/Manila)                                                                                   |
+| Milestone                  | API-1 Shared Contracts consumption foundation                                                              |
+| API-0 status               | Complete; accepted baseline commit `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                              |
+| API-1 status               | Complete for the bounded consumer foundation while all local, clean-environment, and CI gates remain green |
+| Shared Contracts authority | `@kitamo/shared-contracts@0.1.0` at `a380f19f2adcf0557b424461f869aa3d0069e176`                             |
+| Production status          | No production implementation exists or is authorized                                                       |
 
 This inventory records the repository state found before API-0 files were
 created. The Platform API directory was empty and was not a Git repository at

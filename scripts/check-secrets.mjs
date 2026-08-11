@@ -36,7 +36,11 @@ export const STATIC_SECRET_PATTERNS = Object.freeze([
 const sensitiveKey =
   /(?:^|_)(?:API_?KEY|AUTH_?TOKEN|CLIENT_?SECRET|CREDENTIALS?|PASSWORD|PASSWD|PRIVATE_?KEY|SECRET|SERVICE_?ROLE(?:_?KEY)?|TOKEN)(?:_|$)/u;
 const safeValue =
-  /^(?:|change[-_]?me|example|fake|not[-_]?set|placeholder|redacted|replace[-_]?me|synthetic|test|todo|your[-_])(?:$|[-_])/iu;
+  /^(?:change[-_ ]?me|example(?:[-_][A-Za-z0-9.-]+)?|fake(?:[-_][A-Za-z0-9.-]+)?|not[-_ ]?set|placeholder(?:[-_][A-Za-z0-9.-]+)?|redacted|replace[-_ ]?me|synthetic(?:[-_][A-Za-z0-9.-]+)?|test(?:[-_][A-Za-z0-9.-]+)?|todo|your[-_][A-Za-z0-9.-]+)$/iu;
+const exactReference =
+  /^(?:process\.env\.[A-Z_][A-Z0-9_]*|import\.meta\.env\.[A-Z_][A-Z0-9_]*|Deno\.env\.get\(["'][A-Z_][A-Z0-9_]*["']\)|\$[A-Z_][A-Z0-9_]*|\$\{[A-Z_][A-Z0-9_]*\}|\{\{\s*[A-Z_][A-Z0-9_]*\s*\}\}|<[A-Z_][A-Z0-9_]*>)$/iu;
+const knownPublicKey =
+  /^(?:(?:NEXT_)?PUBLIC_)?(?:CLERK_PUBLISHABLE_KEY|STRIPE_PUBLISHABLE_KEY|SUPABASE_ANON_KEY)$/u;
 
 /** @param {string} key */
 function normalizeKey(key) {
@@ -58,11 +62,7 @@ function normalizeValue(value) {
 
 /** @param {string} value */
 function isReferenceOrPlaceholder(value) {
-  return (
-    value.length < 12 ||
-    safeValue.test(value) ||
-    /^(?:process\.env\.|Deno\.env\.|import\.meta\.env\.|\$\{|\{\{|<[^>]+>$)/u.test(value)
-  );
+  return value.length === 0 || safeValue.test(value) || exactReference.test(value);
 }
 
 /**
@@ -73,12 +73,12 @@ function isReferenceOrPlaceholder(value) {
  * @returns {string[]}
  */
 export function scanContent(file, content) {
-  if (content.includes("\0")) return [];
-
   const findings = [];
   for (const pattern of STATIC_SECRET_PATTERNS) {
     if (pattern.expression.test(content)) findings.push(`${file}: ${pattern.name}`);
   }
+
+  if (content.includes("\0")) return [...new Set(findings)];
 
   for (const line of content.split(/\r?\n/u)) {
     const assignment = line.match(
@@ -88,8 +88,7 @@ export function scanContent(file, content) {
 
     const key = normalizeKey(assignment[1] ?? "");
     const value = normalizeValue(assignment[2] ?? "");
-    const explicitlyPublic = /(?:^|_)(?:ANON|PUBLIC|PUBLISHABLE)(?:_|$)/u.test(key);
-    if (sensitiveKey.test(key) && !explicitlyPublic && !isReferenceOrPlaceholder(value)) {
+    if (sensitiveKey.test(key) && !knownPublicKey.test(key) && !isReferenceOrPlaceholder(value)) {
       findings.push(`${file}: assigned secret in ${key}`);
     }
   }

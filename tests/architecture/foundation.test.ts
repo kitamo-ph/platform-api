@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "../..");
 const sourceRoot = resolve(root, "src");
 const boundaryPath = "src/contracts/shared-contracts.ts";
+const sourceExtension = /\.(?:[cm]?[jt]sx?)$/u;
 
 const APPROVED_PACKAGE_IMPORTS = [
   "@kitamo/shared-contracts",
@@ -29,7 +30,7 @@ function sourceFiles(directory: string): string[] {
     .flatMap((entry) => {
       const path = resolve(directory, entry.name);
       if (entry.isDirectory()) return sourceFiles(path);
-      return entry.isFile() && entry.name.endsWith(".ts") ? [path] : [];
+      return entry.isFile() && sourceExtension.test(entry.name) ? [path] : [];
     })
     .sort();
 }
@@ -39,24 +40,36 @@ const sources = sourceFiles(sourceRoot).map((absolutePath) => ({
   text: readFileSync(absolutePath, "utf8"),
 }));
 
-function importedSpecifiers(text: string): string[] {
-  return [...text.matchAll(/\bfrom\s+["']([^"']+)["']/gu)].map((match) => match[1] ?? "");
+function sharedContractSpecifiers(text: string): string[] {
+  return [
+    ...text.matchAll(
+      /(?:\bfrom\s+|\bimport\s+(?!\()|\b(?:import|require(?:\.resolve)?)\s*\(\s*)["'`](@kitamo\/shared-contracts(?:\/[^"'`]*)?)["'`]/gu,
+    ),
+  ].map((match) => match[1] ?? "");
 }
 
 describe("Shared Contracts architecture boundary", () => {
   it("allows direct package imports only in the single contract boundary", () => {
     const packageImports = sources.flatMap(({ path, text }) =>
-      importedSpecifiers(text)
-        .filter(
-          (specifier) =>
-            specifier === "@kitamo/shared-contracts" ||
-            specifier.startsWith("@kitamo/shared-contracts/"),
-        )
-        .map((specifier) => ({ path, specifier })),
+      sharedContractSpecifiers(text).map((specifier) => ({ path, specifier })),
     );
 
     expect(new Set(packageImports.map(({ path }) => path))).toEqual(new Set([boundaryPath]));
     expect(packageImports.map(({ specifier }) => specifier)).toEqual(APPROVED_PACKAGE_IMPORTS);
+  });
+
+  it.each([
+    'import "@kitamo/shared-contracts/errors";',
+    'await import("@kitamo/shared-contracts/errors");',
+    'export * from "@kitamo/shared-contracts/errors";',
+  ])("recognizes side-effect, dynamic, and re-export package references", (source) => {
+    expect(sharedContractSpecifiers(source)).toEqual(["@kitamo/shared-contracts/errors"]);
+  });
+
+  it("allows no Shared Contracts package import outside the boundary", () => {
+    for (const source of sources.filter(({ path }) => path !== boundaryPath)) {
+      expect(sharedContractSpecifiers(source.text), source.path).toEqual([]);
+    }
   });
 
   it("prohibits deep, source-relative, compatibility, discovery, and generated imports", () => {

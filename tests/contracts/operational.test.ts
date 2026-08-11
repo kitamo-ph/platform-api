@@ -4,6 +4,7 @@ import {
   AuditEventSchema,
   AuditOutcomeSchema,
   BusinessReferenceSchema,
+  FieldIssueSchema,
   OpaqueCursorSchema,
   PageSizeSchema,
   PaginationMetadataSchema,
@@ -113,6 +114,22 @@ describe("pagination primitives", () => {
 });
 
 describe("structured errors", () => {
+  it("validates a strict field-level issue inside the shared error envelope", () => {
+    const fieldIssue = {
+      path: ["body", "amount_minor"],
+      code: "invalid",
+      message: "The synthetic amount is invalid.",
+    } as const;
+
+    expect(FieldIssueSchema.parse(fieldIssue)).toEqual(fieldIssue);
+    expect(
+      StructuredErrorSchema.parse({ ...VALID_STRUCTURED_ERROR, field_issues: [fieldIssue] }),
+    ).toEqual({ ...VALID_STRUCTURED_ERROR, field_issues: [fieldIssue] });
+    expect(FieldIssueSchema.safeParse({ ...fieldIssue, internal_value: "redacted" }).success).toBe(
+      false,
+    );
+  });
+
   it("freezes and parses every approved error code", () => {
     expect(StructuredErrorCodeSchema.options).toEqual(STRUCTURED_ERROR_CODES);
     for (const code of STRUCTURED_ERROR_CODES) {

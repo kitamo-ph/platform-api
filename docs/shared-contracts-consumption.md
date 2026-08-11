@@ -5,7 +5,7 @@
 ```text
 API-0: complete
 Shared Contracts SC-0 through SC-4: complete and frozen for this phase
-API-1: bounded Shared Contracts consumer foundation implemented
+API-1: complete for the bounded Shared Contracts consumer foundation
 Production API implementation: not authorized
 ```
 

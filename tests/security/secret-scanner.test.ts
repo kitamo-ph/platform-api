@@ -16,6 +16,13 @@ describe("secret scanner", () => {
       ),
     ],
     ["settings", ["AUTH_", "TOKEN=fixture-token-value-12345"].join("")],
+    ["short.env", ["PASS", "WORD=abc12345678"].join("")],
+    ["unsafe-public.env", ["PUBLIC_PASS", "WORD=fixture-password-12345"].join("")],
+    [
+      "fallback.ts",
+      ["const pass", 'word = process.env.PASSWORD ?? "fixture-password-12345";'].join(""),
+    ],
+    ["fallback.env", ["PASS", "WORD=${PASSWORD:-fixture-password-12345}"].join("")],
     ["config.json", ['"client_', 'secret": "fixture-client-secret-12345"'].join("")],
     ["database.env", ["DATABASE_PASS", "WORD=fixture-password-12345"].join("")],
     ["lock.txt", ["Authorization: Bea", "rer fixtureBearerTokenValue123456789"].join("")],
@@ -32,6 +39,7 @@ describe("secret scanner", () => {
     [".env.example", "SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}"],
     ["config.ts", "const authToken = process.env.AUTH_TOKEN;"],
     [".env.example", "PUBLIC_SUPABASE_ANON_KEY=synthetic-public-value"],
+    [".env.example", "CLERK_PUBLISHABLE_KEY=synthetic-public-value"],
   ])("allows a non-secret placeholder in %s", (file, content) => {
     expect(scanContent(file, content)).toEqual([]);
   });

@@ -4,7 +4,7 @@
 
 | Item                                 | Status                                                                                |
 | ------------------------------------ | ------------------------------------------------------------------------------------- |
-| API-1 contract-consumer architecture | Implemented; verification and CI gates required for acceptance                        |
+| API-1 contract-consumer architecture | Complete for the bounded foundation while verification and CI gates remain green      |
 | Framework selection                  | Proposed; approval required                                                           |
 | API-0 evidence foundation            | Complete at `b93afd444a3e38edc42cb0cb54f44aa780c4d14a`                                |
 | Git repository bootstrap             | Complete on `main`                                                                    |

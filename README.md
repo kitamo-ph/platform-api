@@ -7,17 +7,17 @@
 
 ## Current status
 
-| Area                | Status                                                                                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| API-0               | Complete; the 2026-07-25 repository and dependency evidence is preserved as historical baseline material                                        |
-| API-1               | Shared Contracts consumption foundation implemented; acceptance requires all local, clean-environment, and GitHub Actions gates to remain green |
-| Package/tooling     | npm, Node `>=20.19.4`, CI Node `20.20.0`, strict TypeScript 5.9, ESLint 9, Prettier 3, and Vitest                                               |
-| Shared Contracts    | `@kitamo/shared-contracts@0.1.0`, pinned to source commit `a380f19f2adcf0557b424461f869aa3d0069e176`                                            |
-| Contract boundary   | Transport-neutral adapter under `src/contracts/`; declared package exports only                                                                 |
-| Contract versions   | `0.1.0` only; malformed and unsupported versions fail closed                                                                                    |
-| Tests and CI        | Contract conformance, architecture, fixture, build, secret, and dependency-audit gates; no deployment job                                       |
-| Server framework    | Not selected; Fastify remains an API-0 proposal for a later milestone                                                                           |
-| Production behavior | None                                                                                                                                            |
+| Area                | Status                                                                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API-0               | Complete; the 2026-07-25 repository and dependency evidence is preserved as historical baseline material                                                       |
+| API-1               | **Complete** for the bounded Shared Contracts consumption foundation; completion is invalid if local, clean-environment, or GitHub Actions gates are not green |
+| Package/tooling     | npm, Node `>=20.19.4`, CI Node `20.20.0`, strict TypeScript 5.9, ESLint 9, Prettier 3, and Vitest                                                              |
+| Shared Contracts    | `@kitamo/shared-contracts@0.1.0`, pinned to source commit `a380f19f2adcf0557b424461f869aa3d0069e176`                                                           |
+| Contract boundary   | Transport-neutral adapter under `src/contracts/`; declared package exports only                                                                                |
+| Contract versions   | `0.1.0` only; malformed and unsupported versions fail closed                                                                                                   |
+| Tests and CI        | Contract conformance, architecture, fixture, build, secret, and dependency-audit gates; no deployment job                                                      |
+| Server framework    | Not selected; Fastify remains an API-0 proposal for a later milestone                                                                                          |
+| Production behavior | None                                                                                                                                                           |
 
 API-1 proves that Platform API can acquire, build, resolve, validate, and test
 the approved Shared Contracts package reproducibly. It does not approve an
@@ -141,7 +141,7 @@ npm run audit
 npm run verify
 ```
 
-`verify` reacquires or verifies the installed contract boundary, then runs the
+`verify` prepares and verifies the lockfile-installed contract boundary, then runs the
 format, lint, strict typecheck, full test, explicit contract and architecture
 suites, build, extension-agnostic secret scan, and high-severity npm audit
 gates. The named suites are independently required even though the full test
